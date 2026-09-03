@@ -47,6 +47,7 @@ const bot = new Telegraf(token, {
 });
 
 let isRunning = false;
+let shouldStopCurrentCampaign = false;
 
 // 📬 Send alert to Telegram subscribers when a lead replies
 function notifyLeadReply(reply) {
@@ -93,9 +94,10 @@ Send me any business niche and area, and I will automatically find qualified loc
 
 2️⃣ *Or simply type naturally:*
    \`gym in Miami, FL 10\`
-   \`nail salons in Miami, FL\`
+   \`boutique hotels in Miami, FL\`
 
 ⚙️ *Commands:*
+• \`/stop\` — Abort the active campaign immediately
 • \`/replies\` — View all received lead replies
 • \`/status\` — Check contacted leads ledger
 • \`/dryrun on\` or \`/dryrun off\` — Toggle preview mode
@@ -109,13 +111,23 @@ bot.help((ctx) => {
   return ctx.replyWithMarkdown(`
 📌 *Examples:*
 • \`gym in Miami, FL 10\`
-• \`boutique in Miami, FL 5\`
-• \`/run plumbers in Austin, TX 10\`
+• \`boutique hotels in Miami, FL 5\`
+• \`/stop\` (abort running campaign)
 • \`/replies\` (view responses from prospects)
 • \`/status\`
 • \`/dryrun on\` (preview only)
 • \`/dryrun off\` (send real emails)
 `);
+});
+
+// Stop / Cancel Command
+bot.command(['stop', 'cancel'], (ctx) => {
+  registerChat(ctx.chat.id);
+  if (!isRunning) {
+    return ctx.replyWithMarkdown('ℹ️ *No campaign is currently running.*');
+  }
+  shouldStopCurrentCampaign = true;
+  return ctx.replyWithMarkdown('🛑 *Stopping campaign...* (Halting immediately).');
 });
 
 // Status Command
@@ -133,7 +145,7 @@ bot.command('status', (ctx) => {
 
     const repliesCount = getAllReplies().length;
 
-    ctx.replyWithMarkdown(`📊 *Outreach Ledger Status*\n• Unique Emails Contacted: *${totalEmails}*\n• Replies Received: *${repliesCount}*\n• Places Processed: *${totalPlaces}*\n• Sender: \`${config.fromName} (${config.gmailUser})\`\n• Mode: *${config.dryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}*`);
+    ctx.replyWithMarkdown(`📊 *Outreach Ledger Status*\n• Unique Emails Contacted: *${totalEmails}*\n• Replies Received: *${repliesCount}*\n• Places Processed: *${totalPlaces}*\n• Sender: \`${config.fromName} (${config.gmailUser})\`\n• Active Task: *${isRunning ? '🏃 RUNNING' : '💤 IDLE'}*\n• Mode: *${config.dryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}*`);
   } catch (err) {
     ctx.reply(`⚠️ Could not read ledger: ${err.message}`);
   }
@@ -181,11 +193,12 @@ bot.command('dryrun', (ctx) => {
 // Campaign Trigger Function
 async function triggerCampaign(chatId, niche, region, count = 10) {
   if (isRunning) {
-    bot.telegram.sendMessage(chatId, '⚠️ Another campaign is currently running. Please wait for it to finish.');
+    bot.telegram.sendMessage(chatId, '⚠️ Another campaign is currently running. Send /stop to halt it first.');
     return;
   }
 
   isRunning = true;
+  shouldStopCurrentCampaign = false;
 
   try {
     await runCampaign({
@@ -193,6 +206,7 @@ async function triggerCampaign(chatId, niche, region, count = 10) {
       region,
       maxResults: count,
       dryRun: config.dryRun,
+      shouldAbort: () => shouldStopCurrentCampaign,
       onProgress: async (updateText) => {
         try {
           await bot.telegram.sendMessage(chatId, updateText, { parse_mode: 'Markdown' });
@@ -205,6 +219,7 @@ async function triggerCampaign(chatId, niche, region, count = 10) {
     bot.telegram.sendMessage(chatId, `❌ Campaign Error: ${err.message}`);
   } finally {
     isRunning = false;
+    shouldStopCurrentCampaign = false;
   }
 }
 
@@ -267,19 +282,21 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const secretPath = `/webhook/telegram/${token.replace(/[^a-zA-Z0-9]/g, '')}`;
 
-// Health Check Endpoint (Satisfies Render port binding)
+// Health Check Endpoint
 app.get('/', (req, res) => {
   res.send('Galileo & Duke Lead Bot is running live!\n');
 });
 
-// Telegram Webhook Handler via bot.handleUpdate
+// Telegram Webhook Handler (Acknowledge instantly in 10ms to prevent connection timeouts)
 app.post(secretPath, (req, res) => {
-  try {
-    bot.handleUpdate(req.body, res);
-  } catch (err) {
-    console.error('Webhook handle error:', err);
-    res.sendStatus(500);
-  }
+  res.status(200).send('OK');
+  setImmediate(() => {
+    try {
+      bot.handleUpdate(req.body);
+    } catch (err) {
+      console.error('Webhook handle error:', err);
+    }
+  });
 });
 
 // Gmail Push Webhook
@@ -311,7 +328,7 @@ bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
 });
 
-// Safe shutdown without throwing if bot is in webhook mode
+// Safe shutdown
 process.once('SIGINT', () => {
   try {
     process.exit(0);

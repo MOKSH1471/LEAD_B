@@ -47,7 +47,6 @@ function extractEmailsFromHtml(html, $) {
   const emails = new Set();
 
   if ($) {
-    // 1. Check mailto: links
     $('a[href^="mailto:"]').each((_, el) => {
       const href = $(el).attr('href') || '';
       const cleanMailto = href.replace(/^mailto:/i, '').split('?')[0].trim();
@@ -57,7 +56,6 @@ function extractEmailsFromHtml(html, $) {
     });
   }
 
-  // 2. Scan text for regex matches
   const textMatches = (html || '').match(EMAIL_REGEX) || [];
   for (const match of textMatches) {
     if (isValidEmail(match)) {
@@ -80,11 +78,10 @@ function isParkedOrDead(title, bodyText) {
 }
 
 /**
- * Checks a website URL, extracts readable context for AI, and locates a contact email.
+ * Checks a website URL with snappy fast timeouts (< 3.5s).
  */
 async function checkWebsite(rawUrl, fallbackDirectEmail = null) {
   if (fallbackDirectEmail && isValidEmail(fallbackDirectEmail)) {
-    // If we already have a direct email from map data
     return {
       live: true,
       reason: 'direct_email_found',
@@ -104,12 +101,12 @@ async function checkWebsite(rawUrl, fallbackDirectEmail = null) {
   }
 
   const client = axios.create({
-    timeout: 10000,
+    timeout: 3500, // Snappy fast timeout
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     },
-    maxRedirects: 5,
+    maxRedirects: 3,
     validateStatus: (status) => status >= 200 && status < 400,
   });
 
@@ -117,17 +114,7 @@ async function checkWebsite(rawUrl, fallbackDirectEmail = null) {
   try {
     response = await client.get(formattedUrl);
   } catch (err) {
-    if (formattedUrl.startsWith('https://')) {
-      try {
-        const httpUrl = formattedUrl.replace('https://', 'http://');
-        response = await client.get(httpUrl);
-        formattedUrl = httpUrl;
-      } catch (httpErr) {
-        return { live: false, reason: `unreachable`, text: '', email: null, url: formattedUrl };
-      }
-    } else {
-      return { live: false, reason: `unreachable`, text: '', email: null, url: formattedUrl };
-    }
+    return { live: false, reason: 'unreachable', text: '', email: null, url: formattedUrl };
   }
 
   const html = response.data;
@@ -146,15 +133,15 @@ async function checkWebsite(rawUrl, fallbackDirectEmail = null) {
   // 1. Find emails on homepage
   let emails = extractEmailsFromHtml(html, $);
 
-  // 2. If no email on homepage, check common contact subpages
+  // 2. If no email on homepage, check 1 contact link with fast 2.5s timeout
   if (emails.length === 0) {
-    const contactLinks = new Set();
+    let contactLink = null;
     $('a[href]').each((_, el) => {
+      if (contactLink) return;
       const href = $(el).attr('href') || '';
       const linkText = $(el).text().toLowerCase();
       if (
-        (linkText.includes('contact') || linkText.includes('about') || linkText.includes('reach') ||
-         href.includes('contact') || href.includes('about')) &&
+        (linkText.includes('contact') || href.includes('contact')) &&
         !href.startsWith('mailto:') &&
         !href.startsWith('tel:') &&
         !href.startsWith('javascript:')
@@ -162,21 +149,20 @@ async function checkWebsite(rawUrl, fallbackDirectEmail = null) {
         try {
           const fullLink = new URL(href, formattedUrl).href;
           if (fullLink.startsWith('http')) {
-            contactLinks.add(fullLink);
+            contactLink = fullLink;
           }
         } catch (e) {}
       }
     });
 
-    for (const subLink of Array.from(contactLinks).slice(0, 2)) {
+    if (contactLink) {
       try {
-        const subResp = await client.get(subLink, { timeout: 7000 });
+        const subResp = await client.get(contactLink, { timeout: 2500 });
         if (typeof subResp.data === 'string') {
           const $sub = cheerio.load(subResp.data);
           const subEmails = extractEmailsFromHtml(subResp.data, $sub);
           if (subEmails.length > 0) {
             emails = subEmails;
-            break;
           }
         }
       } catch (e) {}

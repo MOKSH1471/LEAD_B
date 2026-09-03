@@ -8,14 +8,6 @@ const { isPlaceContacted, isEmailContacted, recordContacted, logResult } = requi
 
 /**
  * Executes a full lead generation & outreach campaign.
- * Accepts options to override niche, region, maxResults, and dryRun.
- * @param {Object} options
- * @param {string} options.niche
- * @param {string} options.region
- * @param {number} options.maxResults
- * @param {boolean} options.dryRun
- * @param {Function} [options.onProgress] Optional callback for live UI / Telegram updates
- * @returns {Promise<Object>} Summary stats
  */
 async function runCampaign(options = {}) {
   const niche = options.niche || config.niche;
@@ -23,6 +15,7 @@ async function runCampaign(options = {}) {
   const maxResults = options.maxResults ? parseInt(options.maxResults, 10) : config.maxResults;
   const isDryRun = options.dryRun !== undefined ? options.dryRun : config.dryRun;
   const onProgress = options.onProgress || (() => {});
+  const shouldAbort = options.shouldAbort || (() => false);
 
   const notify = async (msg) => {
     console.log(msg);
@@ -62,6 +55,11 @@ async function runCampaign(options = {}) {
   await notify(`📋 Found ${places.length} businesses with active websites. Scanning for contact emails...`);
 
   for (let i = 0; i < places.length; i++) {
+    if (shouldAbort()) {
+      await notify('🛑 *Campaign stopped by user.*');
+      break;
+    }
+
     if (stats.emailsSent >= maxResults) {
       await notify(`🎯 Reached target goal of ${maxResults} emails sent!`);
       break;
@@ -95,6 +93,11 @@ async function runCampaign(options = {}) {
         stats.alreadyContacted++;
         recordContacted({ placeId: biz.placeId, email: siteInfo.email, name: biz.name, status: 'already_contacted_email' });
         continue;
+      }
+
+      if (shouldAbort()) {
+        await notify('🛑 *Campaign stopped by user.*');
+        break;
       }
 
       // Found a qualified new lead
@@ -155,7 +158,7 @@ async function runCampaign(options = {}) {
     }
   }
 
-  const summary = `📊 *Campaign Finished!*\n` +
+  const summary = `📊 *Campaign Summary*\n` +
     `• Total Evaluated: ${stats.totalEvaluated}\n` +
     `• Already Contacted (Skipped): ${stats.alreadyContacted}\n` +
     `• No Email Found (Skipped): ${stats.noEmailFound}\n` +
