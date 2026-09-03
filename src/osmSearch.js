@@ -4,6 +4,34 @@ const { config } = require('./config');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const NICHE_TAG_MAPPING = {
+  // Hotels, Hospitality & Boutique Hotels
+  'hotel boutique': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
+  'hotel boutiques': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
+  'boutique hotel': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
+  'boutique hotels': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
+  'hotel': ['tourism=hotel'],
+  'hotels': ['tourism=hotel'],
+  'resort': ['tourism=hotel', 'leisure=resort'],
+  'resorts': ['tourism=hotel', 'leisure=resort'],
+  'motel': ['tourism=motel'],
+  'motels': ['tourism=motel'],
+  'inn': ['tourism=hotel', 'tourism=guest_house'],
+  'lodging': ['tourism=hotel', 'tourism=guest_house'],
+  'b&b': ['tourism=guest_house'],
+  'hostel': ['tourism=hostel'],
+
+  // Fashion, Boutiques & Retail
+  'boutique': ['shop=boutique', 'shop=clothes', 'shop=fashion'],
+  'boutiques': ['shop=boutique', 'shop=clothes', 'shop=fashion'],
+  'clothing': ['shop=clothes', 'shop=boutique', 'shop=fashion'],
+  'clothes': ['shop=clothes', 'shop=boutique'],
+  'fashion': ['shop=boutique', 'shop=clothes', 'shop=fashion'],
+  'apparel': ['shop=clothes', 'shop=boutique'],
+  'jewelry': ['shop=jewelry'],
+  'shoes': ['shop=shoes'],
+  'florist': ['shop=florist'],
+  'flowers': ['shop=florist'],
+
   // Beauty, Salons & Spas
   'nail': ['shop=beauty', 'shop=hairdresser', 'beauty=nail_salon'],
   'nails': ['shop=beauty', 'shop=hairdresser', 'beauty=nail_salon'],
@@ -92,8 +120,10 @@ const NICHE_TAG_MAPPING = {
 };
 
 async function geocodeRegion(region) {
+  const cleanRegion = (region || '').replace(/,([^\s])/g, ', $1').trim();
+
   try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(region)}&limit=1`;
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanRegion)}&limit=1`;
     const resp = await axios.get(url, {
       timeout: 8000,
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
@@ -109,7 +139,7 @@ async function geocodeRegion(region) {
           north: maxLat,
           west: minLon,
           east: maxLon,
-          displayName: feat.properties.name || region,
+          displayName: feat.properties.name || cleanRegion,
         };
       } else if (feat.geometry && feat.geometry.coordinates) {
         const [lon, lat] = feat.geometry.coordinates;
@@ -119,7 +149,7 @@ async function geocodeRegion(region) {
           north: lat + delta,
           west: lon - delta,
           east: lon + delta,
-          displayName: feat.properties.name || region,
+          displayName: feat.properties.name || cleanRegion,
         };
       }
     }
@@ -167,7 +197,7 @@ function buildOverpassQuery(niche, bbox) {
     return `[out:json][timeout:20];(\n${clauses}\n);out tags center 150;`;
   }
 
-  return `[out:json][timeout:20];(node["name"]["shop"](${bboxStr});node["name"]["amenity"](${bboxStr});node["name"]["craft"](${bboxStr});node["name"]["office"](${bboxStr});way["name"]["shop"](${bboxStr});way["name"]["amenity"](${bboxStr}););out tags center 150;`;
+  return `[out:json][timeout:20];(node["name"]["shop"](${bboxStr});node["name"]["amenity"](${bboxStr});node["name"]["craft"](${bboxStr});node["name"]["office"](${bboxStr});node["name"]["tourism"](${bboxStr});way["name"]["shop"](${bboxStr});way["name"]["tourism"](${bboxStr}););out tags center 150;`;
 }
 
 /**
@@ -225,7 +255,7 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
     if (!name) continue;
 
     if (matchedTags.length === 0 && searchWords.length > 0) {
-      const allText = `${name} ${tags.amenity || ''} ${tags.shop || ''} ${tags.craft || ''} ${tags.office || ''}`.toLowerCase();
+      const allText = `${name} ${tags.amenity || ''} ${tags.shop || ''} ${tags.tourism || ''} ${tags.craft || ''} ${tags.office || ''}`.toLowerCase();
       const hasWordMatch = searchWords.some(w => allText.includes(w));
       if (!hasWordMatch) {
         continue;
