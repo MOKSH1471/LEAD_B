@@ -109,7 +109,7 @@ bot.help((ctx) => {
   return ctx.replyWithMarkdown(`
 📌 *Examples:*
 • \`gym in Miami, FL 10\`
-• \`boutique hotels in Miami, FL 5\`
+• \`boutique in Miami, FL 5\`
 • \`/run plumbers in Austin, TX 10\`
 • \`/replies\` (view responses from prospects)
 • \`/status\`
@@ -272,7 +272,7 @@ app.get('/', (req, res) => {
   res.send('Galileo & Duke Lead Bot is running live!\n');
 });
 
-// Telegram Webhook Handler via bot.handleUpdate (100% reliable with express.json)
+// Telegram Webhook Handler via bot.handleUpdate
 app.post(secretPath, (req, res) => {
   try {
     bot.handleUpdate(req.body, res);
@@ -303,7 +303,6 @@ app.listen(PORT, async () => {
       console.warn('⚠️ Webhook link note:', e.message);
     }
   } else {
-    // If running locally or without external URL, launch polling
     bot.launch().then(() => console.log('🤖 Polling started.'));
   }
 });
@@ -312,5 +311,14 @@ bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
 });
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// Safe shutdown without throwing if bot is in webhook mode
+process.once('SIGINT', () => {
+  try {
+    process.exit(0);
+  } catch (e) {}
+});
+process.once('SIGTERM', () => {
+  try {
+    process.exit(0);
+  } catch (e) {}
+});
