@@ -7,12 +7,19 @@ let transporter = null;
 
 function getTransporter() {
   if (!transporter && config.gmailUser && config.gmailAppPassword) {
+    // Port 465 SSL is universally open on cloud providers (Render, AWS, DigitalOcean)
+    // whereas port 587 is frequently throttled or blocked by datacenter firewalls.
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // true for port 465 (SSL/TLS)
       auth: {
         user: config.gmailUser,
         pass: config.gmailAppPassword,
       },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
     });
   }
   return transporter;
