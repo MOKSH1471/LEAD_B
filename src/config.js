@@ -23,7 +23,11 @@ const config = {
   googlePlacesApiKey: rawGoogleKey,
   geminiApiKey: getEnv('GEMINI_API_KEY', '', false),
 
-  // Email Config
+  // Resend HTTP API (Bypasses all cloud SMTP port restrictions on Render/AWS)
+  resendApiKey: getEnv('RESEND_API_KEY', '', false),
+  resendFrom: getEnv('RESEND_FROM', 'onboarding@resend.dev', false),
+
+  // Email Config (Fallback Gmail SMTP)
   gmailUser: getEnv('GMAIL_USER', '', false),
   gmailAppPassword: getEnv('GMAIL_APP_PASSWORD', '', false),
   fromName: getEnv('FROM_NAME', 'Freelance Web Consultant'),
@@ -35,7 +39,7 @@ const config = {
 
   // Safety & throttling
   dryRun: getEnv('DRY_RUN', 'true').toLowerCase() === 'true',
-  emailDelayMs: parseInt(getEnv('EMAIL_DELAY_MS', '30000'), 10),
+  emailDelayMs: parseInt(getEnv('EMAIL_DELAY_MS', '15000'), 10),
 };
 
 function validateConfig() {
@@ -47,7 +51,7 @@ function validateConfig() {
     missing.push('GEMINI_API_KEY (get free key from https://aistudio.google.com/)');
   }
   
-  if (!config.dryRun) {
+  if (!config.dryRun && !config.resendApiKey) {
     if (!config.gmailUser) missing.push('GMAIL_USER');
     if (!config.gmailAppPassword) missing.push('GMAIL_APP_PASSWORD');
   }
