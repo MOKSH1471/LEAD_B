@@ -1,4 +1,3 @@
-const axios = require('axios');
 const nodemailer = require('nodemailer');
 const { config } = require('./config');
 
@@ -25,7 +24,7 @@ function getTransporter() {
 }
 
 /**
- * Dispatches an email via Resend HTTP API (recommended for cloud) or fallback Gmail SMTP.
+ * Sends or simulates sending an outreach email via Gmail SMTP.
  */
 async function sendEmail({ to, subject, body, businessName }) {
   if (!to) {
@@ -36,7 +35,7 @@ async function sendEmail({ to, subject, body, businessName }) {
   if (config.dryRun) {
     console.log(`\n📨 [DRY RUN — EMAIL PREVIEW]`);
     console.log(`   To:       ${to} (${businessName || 'Business'})`);
-    console.log(`   From:     "${config.fromName}" <${config.resendFrom || config.gmailUser || 'operator@gmail.com'}>`);
+    console.log(`   From:     "${config.fromName}" <${config.gmailUser || 'operator@gmail.com'}>`);
     console.log(`   Subject:  ${subject}`);
     console.log(`   --- Body ---`);
     console.log(body.split('\n').map(l => `   | ${l}`).join('\n'));
@@ -48,61 +47,10 @@ async function sendEmail({ to, subject, body, businessName }) {
     };
   }
 
-  // METHOD 1: RESEND HTTP API (Bypasses all cloud SMTP port restrictions on Render)
-  if (config.resendApiKey) {
-    try {
-      const fromAddress = config.resendFrom || 'onboarding@resend.dev';
-      const fromHeader = `"${config.fromName}" <${fromAddress}>`;
-
-      const payload = {
-        from: fromHeader,
-        to: [to],
-        subject,
-        text: body,
-      };
-
-      // Set reply_to so prospect responses go directly to Gmail and trigger Telegram alerts
-      if (config.gmailUser) {
-        payload.reply_to = config.gmailUser;
-      }
-
-      const resendResp = await axios.post('https://api.resend.com/emails', payload, {
-        headers: {
-          'Authorization': `Bearer ${config.resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 15000,
-      });
-
-      const messageId = resendResp.data && resendResp.data.id ? resendResp.data.id : 'resend_ok';
-      console.log(`   ✅ Live email dispatched via Resend to ${to} (ID: ${messageId})`);
-
-      if (config.emailDelayMs > 0) {
-        console.log(`   ⏳ Enforcing delay of ${config.emailDelayMs / 1000}s before next send...`);
-        await sleep(config.emailDelayMs);
-      }
-
-      return {
-        success: true,
-        dryRun: false,
-        messageId,
-      };
-    } catch (resendErr) {
-      const errMsg = (resendErr.response && resendErr.response.data && resendErr.response.data.message)
-        ? resendErr.response.data.message
-        : resendErr.message;
-      console.error(`   ❌ Resend dispatch failed for ${to}:`, errMsg);
-      return {
-        success: false,
-        error: errMsg,
-      };
-    }
-  }
-
-  // METHOD 2: GMAIL SMTP FALLBACK (For local laptop execution)
+  // LIVE SEND VIA GMAIL SMTP
   const client = getTransporter();
   if (!client) {
-    throw new Error('Neither RESEND_API_KEY nor GMAIL credentials are configured in .env.');
+    throw new Error('GMAIL_USER or GMAIL_APP_PASSWORD is missing in .env for live sending.');
   }
 
   try {
@@ -113,8 +61,9 @@ async function sendEmail({ to, subject, body, businessName }) {
       text: body,
     });
 
-    console.log(`   ✅ Live email dispatched via Gmail SMTP to ${to} (Message ID: ${info.messageId})`);
+    console.log(`   ✅ Live email dispatched to ${to} (Message ID: ${info.messageId})`);
 
+    // Respect delay between sends to protect sender reputation
     if (config.emailDelayMs > 0) {
       console.log(`   ⏳ Enforcing delay of ${config.emailDelayMs / 1000}s before next send...`);
       await sleep(config.emailDelayMs);
@@ -126,7 +75,7 @@ async function sendEmail({ to, subject, body, businessName }) {
       messageId: info.messageId,
     };
   } catch (err) {
-    console.error(`   ❌ Failed to send email via Gmail SMTP to ${to}:`, err.message);
+    console.error(`   ❌ Failed to send email to ${to}:`, err.message);
     return {
       success: false,
       error: err.message,
