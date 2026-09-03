@@ -1,5 +1,5 @@
+const express = require('express');
 const { Telegraf } = require('telegraf');
-const http = require('http');
 const { config, validateConfig } = require('./config');
 const { runCampaign } = require('./pipeline');
 const { startReplyTracker, getAllReplies } = require('./replyTracker');
@@ -14,16 +14,6 @@ if (!token) {
 }
 
 validateConfig();
-
-// Start tiny HTTP server for Cloud Health Checks (Render / Railway / Koyeb)
-const PORT = process.env.PORT || 3000;
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Galileo & Duke Lead Bot is running 24/7!\n');
-});
-server.listen(PORT, () => {
-  console.log(`🌐 Cloud health-check server listening on port ${PORT}`);
-});
 
 const SUBSCRIBERS_FILE = path.resolve(process.cwd(), 'subscribers.json');
 let subscribers = new Set();
@@ -53,13 +43,13 @@ function registerChat(chatId) {
 }
 
 const bot = new Telegraf(token, {
-  handlerTimeout: 900000, // 15 minutes
+  handlerTimeout: 900000,
 });
 
 let isRunning = false;
 
-// 📬 Reply Tracker Notification Handler
-startReplyTracker((reply) => {
+// 📬 Send alert to Telegram subscribers when a lead replies
+function notifyLeadReply(reply) {
   const alertText = `
 🚨 *NEW LEAD REPLY RECEIVED!*
 🏢 *Business:* *${reply.businessName}*
@@ -80,7 +70,10 @@ startReplyTracker((reply) => {
       console.warn(`Could not send reply alert to chat ${chatId}:`, err.message);
     }
   });
-});
+}
+
+// Start local/polling reply checker
+const replyTracker = startReplyTracker(notifyLeadReply);
 
 // Help / Start Command
 bot.start((ctx) => {
@@ -146,9 +139,13 @@ bot.command('status', (ctx) => {
   }
 });
 
-// Replies Command
-bot.command('replies', (ctx) => {
+// Replies Command (Wakes up and checks latest inbox state)
+bot.command('replies', async (ctx) => {
   registerChat(ctx.chat.id);
+  if (replyTracker && typeof replyTracker.checkNow === 'function') {
+    await replyTracker.checkNow();
+  }
+
   const replies = getAllReplies();
   if (replies.length === 0) {
     return ctx.replyWithMarkdown('📭 *No replies received yet.* (When prospects reply to your emails, you will receive instant alerts here!).');
@@ -181,7 +178,7 @@ bot.command('dryrun', (ctx) => {
   }
 });
 
-// Campaign Trigger Function (Runs asynchronously without blocking Telegraf polling)
+// Campaign Trigger Function
 async function triggerCampaign(chatId, niche, region, count = 10) {
   if (isRunning) {
     bot.telegram.sendMessage(chatId, '⚠️ Another campaign is currently running. Please wait for it to finish.');
@@ -263,19 +260,57 @@ bot.on('text', (ctx) => {
   }
 });
 
-bot.launch().then(() => {
-  console.log('🤖 Telegram Bot + Reply Tracker is live and connected! Waiting for messages...\n');
+// 🌐 Express Server for Cloud Webhooks & Health Checks
+const app = express();
+app.use(express.json());
+
+const PORT = process.env.PORT || 3000;
+const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL;
+
+// Health Check Endpoint
+app.get('/', (req, res) => {
+  res.send('Galileo & Duke Lead Bot is active!\n');
 });
+
+// 📬 Gmail Webhook Endpoint (Triggered when new email arrives)
+app.post('/webhook/gmail', async (req, res) => {
+  console.log('📬 [Gmail Webhook] Incoming push notification from Google Cloud...');
+  res.status(200).send('OK');
+
+  if (replyTracker && typeof replyTracker.checkNow === 'function') {
+    await replyTracker.checkNow();
+  }
+});
+
+// Start Webhook or Long-Polling
+if (WEBHOOK_URL) {
+  const secretPath = `/webhook/telegram/${token.replace(/[^a-zA-Z0-9]/g, '')}`;
+  const fullWebhookUrl = `${WEBHOOK_URL}${secretPath}`;
+
+  app.use(bot.webhookCallback(secretPath));
+
+  app.listen(PORT, async () => {
+    console.log(`🌐 Webhook Server running on port ${PORT}`);
+    try {
+      await bot.telegram.setWebhook(fullWebhookUrl);
+      console.log(`⚡ Telegram Webhook set to: ${fullWebhookUrl}`);
+    } catch (e) {
+      console.warn('⚠️ Webhook configuration note:', e.message);
+    }
+  });
+} else {
+  // Long polling for local development
+  app.listen(PORT, () => {
+    console.log(`🌐 Local server running on port ${PORT}`);
+  });
+  bot.launch().then(() => {
+    console.log('🤖 Telegram Bot is connected via polling.\n');
+  });
+}
 
 bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
 });
 
-process.once('SIGINT', () => {
-  server.close();
-  bot.stop('SIGINT');
-});
-process.once('SIGTERM', () => {
-  server.close();
-  bot.stop('SIGTERM');
-});
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
