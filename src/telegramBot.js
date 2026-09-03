@@ -76,48 +76,46 @@ function notifyLeadReply(reply) {
 // Start reply tracker
 const replyTracker = startReplyTracker(notifyLeadReply);
 
-// Help / Start Command
+const HELP_TEXT = `
+🤖 *Lead-Gen Outreach Bot — Command Center*
+
+📌 *Start a Campaign:*
+• \`/run <niche> in <city, state> [count]\`
+  _Example:_ \`/run gym in Miami, FL 10\`
+  _Example:_ \`/run dentists in Austin, TX 5\`
+• *Or simply type naturally:*
+  \`boutique hotels in Miami, FL 10\`
+  \`plumbers in Chicago, IL\`
+
+🛑 *Campaign Controls:*
+• \`/stop\` or \`/cancel\`
+  _Instantly halts the active campaign immediately._
+
+📬 *Lead Tracking & Replies:*
+• \`/replies\`
+  _Displays all responses received from prospects with email previews._
+• \`/status\`
+  _Shows ledger stats: total emails sent, active task state, and mode._
+
+⚙️ *Mode Settings:*
+• \`/dryrun on\` — Preview mode (no real emails sent)
+• \`/dryrun off\` — Live mode (sends real emails via Gmail)
+
+ℹ️ *Help:*
+• \`/help\` — Display this command menu
+`;
+
+// Start Command
 bot.start((ctx) => {
   registerChat(ctx.chat.id);
-  const helpMessage = `
-👋 *Welcome to the Lead-Gen Outreach Bot!*
-
-Send me any business niche and area, and I will automatically find qualified local businesses, analyze their websites with AI, and dispatch personalized cold outreach emails with your demo website proposal.
-
-🔔 *Instant Reply Alerts:* Whenever a business replies to your email, I will notify you right here on Telegram!
-
-📌 *How to use:*
-1️⃣ *Fast syntax:*
-   \`/run gym in Miami, FL 10\`
-   \`/run dentists in Austin, TX 5\`
-   \`/run boutique in Miami, FL\`
-
-2️⃣ *Or simply type naturally:*
-   \`gym in Miami, FL 10\`
-   \`boutique hotels in Miami, FL\`
-
-⚙️ *Commands:*
-• \`/stop\` — Abort the active campaign immediately
-• \`/replies\` — View all received lead replies
-• \`/status\` — Check contacted leads ledger
-• \`/dryrun on\` or \`/dryrun off\` — Toggle preview mode
-• \`/help\` — View this guide
-`;
-  return ctx.replyWithMarkdown(helpMessage);
+  const welcome = `👋 *Welcome to your 24/7 Lead-Gen & Outreach Bot!*\n` + HELP_TEXT;
+  return ctx.replyWithMarkdown(welcome);
 });
 
+// Help Command
 bot.help((ctx) => {
   registerChat(ctx.chat.id);
-  return ctx.replyWithMarkdown(`
-📌 *Examples:*
-• \`gym in Miami, FL 10\`
-• \`boutique hotels in Miami, FL 5\`
-• \`/stop\` (abort running campaign)
-• \`/replies\` (view responses from prospects)
-• \`/status\`
-• \`/dryrun on\` (preview only)
-• \`/dryrun off\` (send real emails)
-`);
+  return ctx.replyWithMarkdown(HELP_TEXT);
 });
 
 // Stop / Cancel Command
@@ -287,7 +285,7 @@ app.get('/', (req, res) => {
   res.send('Galileo & Duke Lead Bot is running live!\n');
 });
 
-// Telegram Webhook Handler (Acknowledge instantly in 10ms to prevent connection timeouts)
+// Telegram Webhook Handler (Instantly ack 200 to prevent connection timeouts)
 app.post(secretPath, (req, res) => {
   res.status(200).send('OK');
   setImmediate(() => {

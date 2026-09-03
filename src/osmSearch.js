@@ -4,6 +4,18 @@ const { config } = require('./config');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const NICHE_TAG_MAPPING = {
+  // Fitness, Gyms & Training
+  'gym': ['leisure=fitness_centre'],
+  'gyms': ['leisure=fitness_centre'],
+  'fitness': ['leisure=fitness_centre'],
+  'fitness centre': ['leisure=fitness_centre'],
+  'fitness center': ['leisure=fitness_centre'],
+  'crossfit': ['leisure=fitness_centre'],
+  'pilates': ['leisure=fitness_centre'],
+  'yoga': ['leisure=fitness_centre'],
+  'martial arts': ['leisure=sports_centre', 'leisure=fitness_centre'],
+  'boxing': ['leisure=sports_centre', 'leisure=fitness_centre'],
+
   // Hotels, Hospitality & Boutique Hotels
   'hotel boutique': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
   'hotel boutiques': ['tourism=hotel', 'tourism=guest_house', 'shop=boutique'],
@@ -107,12 +119,6 @@ const NICHE_TAG_MAPPING = {
   'bakeries': ['shop=bakery'],
   'coffee': ['amenity=cafe'],
 
-  // Fitness
-  'gym': ['leisure=fitness_centre'],
-  'gyms': ['leisure=fitness_centre'],
-  'fitness': ['leisure=fitness_centre'],
-  'yoga': ['leisure=fitness_centre'],
-
   // Automotive
   'mechanic': ['shop=car_repair'],
   'auto repair': ['shop=car_repair'],
@@ -126,7 +132,7 @@ async function geocodeRegion(region) {
     const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanRegion)}&limit=1`;
     const resp = await axios.get(url, {
       timeout: 8000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      headers: { 'User-Agent': 'curl/8.4.0' },
     });
 
     if (resp.data && resp.data.features && resp.data.features.length > 0) {
@@ -194,14 +200,14 @@ function buildOverpassQuery(niche, bbox) {
       return `node["${k}"="${v}"]["name"](${bboxStr});\nway["${k}"="${v}"]["name"](${bboxStr});`;
     }).join('\n');
 
-    return `[out:json][timeout:20];(\n${clauses}\n);out tags center 150;`;
+    return `[out:json][timeout:15];(\n${clauses}\n);out tags center 150;`;
   }
 
-  return `[out:json][timeout:20];(node["name"]["shop"](${bboxStr});node["name"]["amenity"](${bboxStr});node["name"]["craft"](${bboxStr});node["name"]["office"](${bboxStr});node["name"]["tourism"](${bboxStr});way["name"]["shop"](${bboxStr});way["name"]["tourism"](${bboxStr}););out tags center 150;`;
+  return `[out:json][timeout:15];(node["name"]["shop"](${bboxStr});node["name"]["amenity"](${bboxStr});node["name"]["craft"](${bboxStr});node["name"]["office"](${bboxStr});node["name"]["leisure"](${bboxStr});way["name"]["shop"](${bboxStr});way["name"]["leisure"](${bboxStr}););out tags center 150;`;
 }
 
 /**
- * Searches OpenStreetMap using reliable high-speed endpoints.
+ * Searches OpenStreetMap using reliable high-speed endpoints with curl User-Agent.
  */
 async function searchPlacesOSM(niche = config.niche, region = config.region, maxResults = config.maxResults) {
   console.log(`\n🗺️  [OpenStreetMap] Searching for "${niche}" in "${region}"...`);
@@ -216,8 +222,9 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
 
   const overpassQuery = buildOverpassQuery(niche, bbox);
   const overpassEndpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://lz4.overpass-api.de/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-    'https://overpass.openstreetmap.ru/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
   ];
 
@@ -228,9 +235,9 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
       const resp = await axios.post(endpoint, overpassQuery, {
         headers: {
           'Content-Type': 'text/plain',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0',
+          'User-Agent': 'curl/8.4.0', // Essential to prevent HTTP 406
         },
-        timeout: 20000,
+        timeout: 12000,
       });
 
       if (resp.data && Array.isArray(resp.data.elements) && resp.data.elements.length > 0) {
@@ -239,7 +246,7 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
       }
     } catch (err) {
       console.warn(`   ⚠️ Endpoint ${new URL(endpoint).hostname} note (${err.message}), trying next mirror...`);
-      await sleep(500);
+      await sleep(300);
     }
   }
 
@@ -255,7 +262,7 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
     if (!name) continue;
 
     if (matchedTags.length === 0 && searchWords.length > 0) {
-      const allText = `${name} ${tags.amenity || ''} ${tags.shop || ''} ${tags.tourism || ''} ${tags.craft || ''} ${tags.office || ''}`.toLowerCase();
+      const allText = `${name} ${tags.amenity || ''} ${tags.shop || ''} ${tags.leisure || ''} ${tags.tourism || ''} ${tags.craft || ''} ${tags.office || ''}`.toLowerCase();
       const hasWordMatch = searchWords.some(w => allText.includes(w));
       if (!hasWordMatch) {
         continue;

@@ -1,13 +1,15 @@
 const { config } = require('./config');
 const { searchPlaces } = require('./placesSearch');
 const { searchPlacesOSM } = require('./osmSearch');
+const { searchNominatim } = require('./nominatimSearch');
+const { searchWebFallback } = require('./webScraperSearch');
 const { checkWebsite } = require('./websiteCheck');
 const { analyzeSite } = require('./analyzer');
 const { sendEmail } = require('./emailSender');
 const { isPlaceContacted, isEmailContacted, recordContacted, logResult } = require('./tracker');
 
 /**
- * Executes a full lead generation & outreach campaign.
+ * Executes a full lead generation & outreach campaign with 3-layer search resiliency.
  */
 async function runCampaign(options = {}) {
   const niche = options.niche || config.niche;
@@ -40,14 +42,27 @@ async function runCampaign(options = {}) {
     if (config.searchProvider === 'google') {
       places = await searchPlaces(niche, region, maxResults * 3);
     } else {
-      places = await searchPlacesOSM(niche, region, maxResults * 4);
+      // Layer 1: OpenStreetMap Overpass (with fast multi-mirror fallback)
+      places = await searchPlacesOSM(niche, region, maxResults * 3);
+
+      // Layer 2: Nominatim fallback if Overpass returned 0
+      if (!places || places.length === 0) {
+        await notify(`ℹ️ Primary map server busy, trying secondary map directory...`);
+        places = await searchNominatim(niche, region, maxResults * 3);
+      }
+
+      // Layer 3: Web Search Fallback if both returned 0
+      if (!places || places.length === 0) {
+        await notify(`ℹ️ Searching web for local ${niche} in ${region}...`);
+        places = await searchWebFallback(niche, region, maxResults * 3);
+      }
     }
   } catch (err) {
     await notify(`❌ Failed to search places: ${err.message}`);
     throw err;
   }
 
-  if (places.length === 0) {
+  if (!places || places.length === 0) {
     await notify(`⚠️ No qualifying businesses with websites found in "${region}".`);
     return stats;
   }
