@@ -1,4 +1,5 @@
 const { Telegraf } = require('telegraf');
+const http = require('http');
 const { config, validateConfig } = require('./config');
 const { runCampaign } = require('./pipeline');
 const { startReplyTracker, getAllReplies } = require('./replyTracker');
@@ -13,6 +14,16 @@ if (!token) {
 }
 
 validateConfig();
+
+// Start tiny HTTP server for Cloud Health Checks (Render / Railway / Koyeb)
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Galileo & Duke Lead Bot is running 24/7!\n');
+});
+server.listen(PORT, () => {
+  console.log(`🌐 Cloud health-check server listening on port ${PORT}`);
+});
 
 const SUBSCRIBERS_FILE = path.resolve(process.cwd(), 'subscribers.json');
 let subscribers = new Set();
@@ -41,7 +52,6 @@ function registerChat(chatId) {
   }
 }
 
-// Initialize Telegraf with extended handler timeout
 const bot = new Telegraf(token, {
   handlerTimeout: 900000, // 15 minutes
 });
@@ -223,7 +233,6 @@ bot.command('run', (ctx) => {
   }
 
   const region = rest;
-  // Trigger in background non-blocking
   setImmediate(() => triggerCampaign(chatId, niche, region, count));
 });
 
@@ -248,7 +257,6 @@ bot.on('text', (ctx) => {
     }
     const region = rest;
 
-    // Trigger in background non-blocking
     setImmediate(() => triggerCampaign(chatId, niche, region, count));
   } else {
     return ctx.replyWithMarkdown(`💡 To start a campaign, send: \`<niche> in <region>\` (e.g. \`dentists in Austin, TX\`) or type /help.`);
@@ -259,10 +267,15 @@ bot.launch().then(() => {
   console.log('🤖 Telegram Bot + Reply Tracker is live and connected! Waiting for messages...\n');
 });
 
-// Catch unhandled errors gracefully so the process never crashes
 bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
 });
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => {
+  server.close();
+  bot.stop('SIGINT');
+});
+process.once('SIGTERM', () => {
+  server.close();
+  bot.stop('SIGTERM');
+});

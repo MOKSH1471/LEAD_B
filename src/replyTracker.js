@@ -58,7 +58,7 @@ function getAllReplies() {
 
 /**
  * Starts the IMAP background polling worker for incoming prospect replies.
- * @param {Function} onNewReply callback fired when a lead replies
+ * Uses fresh client connection per check cycle for maximum reliability.
  */
 function startReplyTracker(onNewReply) {
   if (!config.gmailUser || !config.gmailAppPassword) {
@@ -68,47 +68,39 @@ function startReplyTracker(onNewReply) {
 
   loadNotified();
 
-  const client = new ImapFlow({
-    host: 'imap.gmail.com',
-    port: 993,
-    secure: true,
-    auth: {
-      user: config.gmailUser,
-      pass: config.gmailAppPassword,
-    },
-    logger: false,
-  });
-
   async function checkInbox() {
+    const contactedEmails = getContactedMap();
+    const emailKeys = Object.keys(contactedEmails);
+    if (emailKeys.length === 0) return;
+
+    const client = new ImapFlow({
+      host: 'imap.gmail.com',
+      port: 993,
+      secure: true,
+      auth: {
+        user: config.gmailUser,
+        pass: config.gmailAppPassword,
+      },
+      logger: false,
+    });
+
     try {
-      if (!client.authenticated) {
-        await client.connect();
-      }
-
+      await client.connect();
       const lock = await client.getMailboxLock('INBOX');
-      try {
-        const contactedEmails = getContactedMap();
-        const emailKeys = Object.keys(contactedEmails);
-        if (emailKeys.length === 0) {
-          return;
-        }
 
-        // Fetch recent messages (last 25)
+      try {
         const messages = client.fetch({ seq: '1:*' }, { envelope: true, source: true });
 
-        // Iterate through messages in reverse to check newest first
         for await (const msg of messages) {
           const uid = String(msg.uid);
           if (notifiedSet.has(uid)) continue;
 
           const fromAddress = (msg.envelope.from && msg.envelope.from[0] ? msg.envelope.from[0].address : '').toLowerCase().trim();
 
-          // Check if sender matches any business we contacted
           if (fromAddress && (contactedEmails[fromAddress] || emailKeys.some(k => fromAddress.includes(k)))) {
             const matchedKey = contactedEmails[fromAddress] ? fromAddress : emailKeys.find(k => fromAddress.includes(k));
             const businessInfo = contactedEmails[matchedKey] || { name: 'Prospect' };
 
-            // Parse full email body
             let bodyText = '';
             try {
               const parsed = await simpleParser(msg.source);
@@ -117,7 +109,6 @@ function startReplyTracker(onNewReply) {
               bodyText = msg.envelope.subject || '';
             }
 
-            // Clean body preview (first ~250 chars)
             const cleanSnippet = bodyText.replace(/\s+/g, ' ').trim().slice(0, 300);
 
             const replyData = {
@@ -139,33 +130,27 @@ function startReplyTracker(onNewReply) {
               onNewReply(replyData);
             }
           } else {
-            // Mark non-lead message as seen so we don't re-download source next time
             notifiedSet.add(uid);
           }
         }
       } finally {
         lock.release();
       }
+      await client.logout();
     } catch (err) {
-      // Non-critical network/auth retry log
-      if (!err.message.includes('Closed') && !err.message.includes('connection')) {
-        console.warn('   ⚠️ Reply tracker sync note:', err.message);
-      }
+      // Ignore normal disconnects
     }
   }
 
-  // Initial check after 3 seconds
-  setTimeout(checkInbox, 3000);
+  // Initial check after 5 seconds
+  setTimeout(checkInbox, 5000);
 
-  // Poll inbox every 60 seconds
-  const intervalId = setInterval(checkInbox, 60000);
+  // Poll inbox every 90 seconds
+  const intervalId = setInterval(checkInbox, 90000);
 
   return {
     checkNow: checkInbox,
-    stop: () => {
-      clearInterval(intervalId);
-      client.logout().catch(() => {});
-    },
+    stop: () => clearInterval(intervalId),
   };
 }
 
