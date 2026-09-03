@@ -72,7 +72,7 @@ function notifyLeadReply(reply) {
   });
 }
 
-// Start local/polling reply checker
+// Start reply tracker
 const replyTracker = startReplyTracker(notifyLeadReply);
 
 // Help / Start Command
@@ -83,17 +83,17 @@ bot.start((ctx) => {
 
 Send me any business niche and area, and I will automatically find qualified local businesses, analyze their websites with AI, and dispatch personalized cold outreach emails with your demo website proposal.
 
-🔔 *Instant Reply Alerts:* Whenever a business replies to your email, I will instantly notify you right here on Telegram!
+🔔 *Instant Reply Alerts:* Whenever a business replies to your email, I will notify you right here on Telegram!
 
 📌 *How to use:*
 1️⃣ *Fast syntax:*
-   \`/run plumbers in Miami, FL 10\`
+   \`/run gym in Miami, FL 10\`
    \`/run dentists in Austin, TX 5\`
-   \`/run roofers in Dallas, TX\`
+   \`/run boutique in Miami, FL\`
 
 2️⃣ *Or simply type naturally:*
+   \`gym in Miami, FL 10\`
    \`nail salons in Miami, FL\`
-   \`hvac in Chicago, IL\`
 
 ⚙️ *Commands:*
 • \`/replies\` — View all received lead replies
@@ -108,9 +108,9 @@ bot.help((ctx) => {
   registerChat(ctx.chat.id);
   return ctx.replyWithMarkdown(`
 📌 *Examples:*
-• \`dentists in Austin, TX\`
-• \`nail salons in Miami, FL 10\`
-• \`/run real estate in Phoenix, AZ 10\`
+• \`gym in Miami, FL 10\`
+• \`boutique hotels in Miami, FL 5\`
+• \`/run plumbers in Austin, TX 10\`
 • \`/replies\` (view responses from prospects)
 • \`/status\`
 • \`/dryrun on\` (preview only)
@@ -139,7 +139,7 @@ bot.command('status', (ctx) => {
   }
 });
 
-// Replies Command (Wakes up and checks latest inbox state)
+// Replies Command
 bot.command('replies', async (ctx) => {
   registerChat(ctx.chat.id);
   if (replyTracker && typeof replyTracker.checkNow === 'function') {
@@ -215,7 +215,7 @@ bot.command('run', (ctx) => {
   const text = ctx.message.text.replace(/^\/run\s+/i, '').trim();
   const inIndex = text.toLowerCase().lastIndexOf(' in ');
   if (inIndex === -1) {
-    return ctx.replyWithMarkdown('⚠️ Please specify region using the word "in", e.g.:\n`/run dentists in Austin, TX 10`');
+    return ctx.replyWithMarkdown('⚠️ Please specify region using the word "in", e.g.:\n`/run gym in Miami, FL 10`');
   }
 
   const niche = text.slice(0, inIndex).trim();
@@ -256,57 +256,57 @@ bot.on('text', (ctx) => {
 
     setImmediate(() => triggerCampaign(chatId, niche, region, count));
   } else {
-    return ctx.replyWithMarkdown(`💡 To start a campaign, send: \`<niche> in <region>\` (e.g. \`dentists in Austin, TX\`) or type /help.`);
+    return ctx.replyWithMarkdown(`💡 To start a campaign, send: \`<niche> in <region>\` (e.g. \`gym in Miami, FL 10\`) or type /help.`);
   }
 });
 
-// 🌐 Express Server for Cloud Webhooks & Health Checks
+// 🌐 Express Server for Cloud Health Checks & Webhooks
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL;
+const secretPath = `/webhook/telegram/${token.replace(/[^a-zA-Z0-9]/g, '')}`;
 
-// Health Check Endpoint
+// Health Check Endpoint (Satisfies Render port binding)
 app.get('/', (req, res) => {
-  res.send('Galileo & Duke Lead Bot is active!\n');
+  res.send('Galileo & Duke Lead Bot is running live!\n');
 });
 
-// 📬 Gmail Webhook Endpoint (Triggered when new email arrives)
-app.post('/webhook/gmail', async (req, res) => {
-  console.log('📬 [Gmail Webhook] Incoming push notification from Google Cloud...');
-  res.status(200).send('OK');
+// Telegram Webhook Handler via bot.handleUpdate (100% reliable with express.json)
+app.post(secretPath, (req, res) => {
+  try {
+    bot.handleUpdate(req.body, res);
+  } catch (err) {
+    console.error('Webhook handle error:', err);
+    res.sendStatus(500);
+  }
+});
 
+// Gmail Push Webhook
+app.post('/webhook/gmail', async (req, res) => {
+  res.status(200).send('OK');
   if (replyTracker && typeof replyTracker.checkNow === 'function') {
     await replyTracker.checkNow();
   }
 });
 
-// Start Webhook or Long-Polling
-if (WEBHOOK_URL) {
-  const secretPath = `/webhook/telegram/${token.replace(/[^a-zA-Z0-9]/g, '')}`;
-  const fullWebhookUrl = `${WEBHOOK_URL}${secretPath}`;
+const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL;
 
-  app.use(bot.webhookCallback(secretPath));
-
-  app.listen(PORT, async () => {
-    console.log(`🌐 Webhook Server running on port ${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`🌐 Server active on port ${PORT}`);
+  if (WEBHOOK_URL) {
+    const fullWebhookUrl = `${WEBHOOK_URL}${secretPath}`;
     try {
       await bot.telegram.setWebhook(fullWebhookUrl);
-      console.log(`⚡ Telegram Webhook set to: ${fullWebhookUrl}`);
+      console.log(`⚡ Telegram Webhook linked to: ${fullWebhookUrl}`);
     } catch (e) {
-      console.warn('⚠️ Webhook configuration note:', e.message);
+      console.warn('⚠️ Webhook link note:', e.message);
     }
-  });
-} else {
-  // Long polling for local development
-  app.listen(PORT, () => {
-    console.log(`🌐 Local server running on port ${PORT}`);
-  });
-  bot.launch().then(() => {
-    console.log('🤖 Telegram Bot is connected via polling.\n');
-  });
-}
+  } else {
+    // If running locally or without external URL, launch polling
+    bot.launch().then(() => console.log('🤖 Polling started.'));
+  }
+});
 
 bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
