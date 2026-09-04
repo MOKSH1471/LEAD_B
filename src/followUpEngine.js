@@ -129,6 +129,7 @@ Return ONLY valid JSON (no markdown, no backticks):
  */
 async function runFollowUpSweep(options = {}) {
   const isDryRun = options.dryRun !== undefined ? options.dryRun : config.dryRun;
+  const isForced = options.force === true;
   const onProgress = options.onProgress || (() => {});
   const shouldAbort = options.shouldAbort || (() => false);
 
@@ -139,10 +140,10 @@ async function runFollowUpSweep(options = {}) {
     } catch (e) {}
   };
 
-  const dueLeads = getLeadsDueForFollowUp();
+  const dueLeads = getLeadsDueForFollowUp({ force: isForced });
 
   if (dueLeads.length === 0) {
-    await notify('📬 *Follow-Up Sweep:* No prospects are currently due for follow-ups.');
+    await notify('📬 *Follow-Up Sweep:* No prospects are eligible for follow-ups.');
     return {
       totalEvaluated: 0,
       stage1Sent: 0,
@@ -151,7 +152,8 @@ async function runFollowUpSweep(options = {}) {
     };
   }
 
-  await notify(`📬 *Starting Follow-Up Sweep*\nFound *${dueLeads.length}* lead(s) due for follow-up outreach.\n🛡️ *Mode:* ${isDryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}`);
+  const forcedNotice = isForced ? ' *(⚡ Early Force Mode Active)*' : '';
+  await notify(`📬 *Starting Follow-Up Sweep*${forcedNotice}\nFound *${dueLeads.length}* lead(s) ready for follow-up outreach.\n🛡️ *Mode:* ${isDryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}`);
 
   const stats = {
     totalEvaluated: dueLeads.length,

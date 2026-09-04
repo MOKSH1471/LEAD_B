@@ -99,7 +99,8 @@ const HELP_TEXT = `
 
 📬 *Automated Follow-Ups:*
 • \`/followups\` — View follow-up queue breakdown (Stage 1 & Stage 2)
-• \`/followups run\` — Trigger an immediate follow-up sweep right now
+• \`/followups run\` — Trigger standard follow-up sweep (for leads due after 3 days)
+• \`/followups force\` — Send follow-ups *EARLY right now* (bypasses 3-day waiting period)
 
 🛑 *Campaign Controls:*
 • \`/stop\` or \`/cancel\` — Instantly halts active campaign or sweep
@@ -224,49 +225,64 @@ bot.command('autopilot', async (ctx) => {
   }
 });
 
+async function executeFollowUpSweep(ctx, { force = false } = {}) {
+  if (isRunning) {
+    return ctx.replyWithMarkdown('⚠️ A task is currently running. Send /stop to halt it first.');
+  }
+  isRunning = true;
+  shouldStopCurrentCampaign = false;
+  const banner = force
+    ? '📬 *Starting FORCED follow-up sweep...* (⚡ Bypassing 3-day delay to send early)'
+    : '📬 *Starting manual follow-up sweep...*';
+  ctx.replyWithMarkdown(banner);
+  try {
+    await runFollowUpSweep({
+      dryRun: config.dryRun,
+      force,
+      onProgress: async (msg) => {
+        try {
+          await ctx.replyWithMarkdown(msg);
+        } catch (e) {
+          await ctx.reply(msg.replace(/[*_`]/g, ''));
+        }
+      },
+      shouldAbort: () => shouldStopCurrentCampaign,
+    });
+  } catch (err) {
+    ctx.reply(`❌ Follow-up sweep error: ${err.message}`);
+  } finally {
+    isRunning = false;
+    shouldStopCurrentCampaign = false;
+  }
+}
+
+function sendFollowUpStatus(ctx) {
+  const stats = getFollowUpQueueStats();
+  return ctx.replyWithMarkdown(
+    `📬 *Automated Follow-Up Queue Breakdown*\n` +
+    `• ⚡ *Due for Follow-Up NOW:* *${stats.dueNow}*\n` +
+    `• ⏳ Waiting for Stage 1 (Day 3 Soft Bump): *${stats.stage0Waiting}*\n` +
+    `• ⏳ Waiting for Stage 2 (Day 7 Breakup): *${stats.stage1Waiting}*\n` +
+    `• 🏁 Completed Follow-Up Sequence: *${stats.stage2Completed}*\n` +
+    `• 💬 Prospects Who Replied: *${stats.totalReplied}*\n` +
+    `• Total Email Leads in Ledger: *${stats.totalTracked}*\n\n` +
+    `👉 Send \`/followups run\` to send due follow-ups.\n` +
+    `👉 Send \`/followups force\` (or type \`send follow ups early\`) to bypass the 3-day delay and send early!`
+  );
+}
+
 // Follow-Ups Command
-bot.command('followups', async (ctx) => {
+bot.command(['followups', 'followup'], async (ctx) => {
   registerChat(ctx.chat.id);
   const parts = ctx.message.text.split(' ');
   const sub = parts[1] ? parts[1].toLowerCase() : '';
 
-  if (sub === 'run' || sub === 'now') {
-    if (isRunning) {
-      return ctx.replyWithMarkdown('⚠️ A task is currently running. Send /stop to halt it first.');
-    }
-    isRunning = true;
-    shouldStopCurrentCampaign = false;
-    ctx.replyWithMarkdown('📬 *Starting manual follow-up sweep...*');
-    try {
-      await runFollowUpSweep({
-        dryRun: config.dryRun,
-        onProgress: async (msg) => {
-          try {
-            await ctx.replyWithMarkdown(msg);
-          } catch (e) {
-            await ctx.reply(msg.replace(/[*_`]/g, ''));
-          }
-        },
-        shouldAbort: () => shouldStopCurrentCampaign,
-      });
-    } catch (err) {
-      ctx.reply(`❌ Follow-up sweep error: ${err.message}`);
-    } finally {
-      isRunning = false;
-      shouldStopCurrentCampaign = false;
-    }
+  if (sub === 'force' || sub === 'early') {
+    await executeFollowUpSweep(ctx, { force: true });
+  } else if (sub === 'run' || sub === 'now' || sub === 'send' || sub === 'start') {
+    await executeFollowUpSweep(ctx, { force: false });
   } else {
-    const stats = getFollowUpQueueStats();
-    ctx.replyWithMarkdown(
-      `📬 *Automated Follow-Up Queue Breakdown*\n` +
-      `• ⚡ *Due for Follow-Up NOW:* *${stats.dueNow}*\n` +
-      `• ⏳ Waiting for Stage 1 (Day 3 Soft Bump): *${stats.stage0Waiting}*\n` +
-      `• ⏳ Waiting for Stage 2 (Day 7 Breakup): *${stats.stage1Waiting}*\n` +
-      `• 🏁 Completed Follow-Up Sequence: *${stats.stage2Completed}*\n` +
-      `• 💬 Prospects Who Replied: *${stats.totalReplied}*\n` +
-      `• Total Email Leads in Ledger: *${stats.totalTracked}*\n\n` +
-      `👉 Send \`/followups run\` to execute an immediate follow-up sweep right now!`
-    );
+    sendFollowUpStatus(ctx);
   }
 });
 
@@ -374,6 +390,19 @@ bot.on('text', (ctx) => {
   const text = ctx.message.text.trim();
   if (text.startsWith('/')) return;
 
+  const lower = text.toLowerCase();
+
+  // Natural language triggers for follow-ups
+  if (lower === 'follow up' || lower === 'followup' || lower === 'followups' || lower === 'follow ups') {
+    return sendFollowUpStatus(ctx);
+  }
+  if (lower.includes('follow') && (lower.includes('force') || lower.includes('early'))) {
+    return executeFollowUpSweep(ctx, { force: true });
+  }
+  if (lower.includes('follow') && (lower.includes('send') || lower.includes('run') || lower.includes('sweep') || lower.includes('now') || lower.includes('start'))) {
+    return executeFollowUpSweep(ctx, { force: false });
+  }
+
   const inIndex = text.toLowerCase().lastIndexOf(' in ');
   if (inIndex !== -1) {
     const niche = text.slice(0, inIndex).trim();
@@ -390,7 +419,7 @@ bot.on('text', (ctx) => {
 
     setImmediate(() => triggerCampaign(chatId, niche, region, count));
   } else {
-    return ctx.replyWithMarkdown(`💡 To start a campaign, send: \`<niche> in <region>\` (e.g. \`gym in Miami, FL 10\`) or type /help.`);
+    return ctx.replyWithMarkdown(`💡 To start a campaign, send: \`<niche> in <region>\` (e.g. \`gym in Miami, FL 10\`), or type \`send follow ups\`, or send /help.`);
   }
 });
 
@@ -432,38 +461,47 @@ async function startBot() {
       }
     });
   } else {
+    // Start local web server so http://localhost:PORT is accessible
+    try {
+      app.listen(PORT, () => {
+        console.log(`🌐 Web/Health server listening on http://localhost:${PORT}`);
+      });
+    } catch (e) {}
+
     // RUNNING LOCALLY: Clear any cloud webhook so Telegram routes all messages directly to this laptop!
     try {
       await bot.telegram.deleteWebhook({ drop_pending_updates: false });
       console.log('⚡ Cleared cloud webhook. Connecting directly to Telegram via local polling...');
     } catch (e) {}
 
-    bot.launch().then(async () => {
-      console.log('🤖 Telegram Bot is connected and running locally on your laptop!\n');
+    bot.launch({ dropPendingUpdates: false }).catch(err => {
+      console.error('❌ Telegram bot polling error:', err.message);
+    });
 
-      // Verify Gmail SMTP works at startup — catch credential/port issues immediately
-      const smtpOk = await verifySMTP();
-      if (!smtpOk && !config.dryRun) {
-        const warnMsg = '⚠️ *SMTP Warning:* Gmail connection failed at startup.\nEmails will NOT be sent until this is fixed.\n→ Check `GMAIL_USER` and `GMAIL_APP_PASSWORD` in your environment variables.';
-        subscribers.forEach(chatId => {
-          try { bot.telegram.sendMessage(chatId, warnMsg, { parse_mode: 'Markdown' }); } catch (e) {}
-        });
-      }
+    console.log('🤖 Telegram Bot is connected and running locally on your laptop!\n');
+  }
 
-      if (config.autopilotEnabled) {
-        console.log('🤖 AUTOPILOT_ENABLED=true: Auto-starting background client prospecting & follow-ups...');
-        startAutopilot({
-          onProgress: async (msg) => {
-            subscribers.forEach((chatId) => {
-              try {
-                bot.telegram.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
-              } catch (e) {
-                bot.telegram.sendMessage(chatId, msg.replace(/[*_`]/g, ''));
-              }
-            });
-          },
+  // Verify Gmail SMTP works at startup — catch credential/port issues immediately
+  const smtpOk = await verifySMTP();
+  if (!smtpOk && !config.dryRun) {
+    const warnMsg = '⚠️ *SMTP Warning:* Gmail connection failed at startup.\nEmails will NOT be sent until this is fixed.\n→ Check `GMAIL_USER` and `GMAIL_APP_PASSWORD` in your environment variables.';
+    subscribers.forEach(chatId => {
+      try { bot.telegram.sendMessage(chatId, warnMsg, { parse_mode: 'Markdown' }); } catch (e) {}
+    });
+  }
+
+  if (config.autopilotEnabled) {
+    console.log('🤖 AUTOPILOT_ENABLED=true: Auto-starting background client prospecting & follow-ups...');
+    startAutopilot({
+      onProgress: async (msg) => {
+        subscribers.forEach((chatId) => {
+          try {
+            bot.telegram.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
+          } catch (e) {
+            bot.telegram.sendMessage(chatId, msg.replace(/[*_`]/g, ''));
+          }
         });
-      }
+      },
     });
   }
 }

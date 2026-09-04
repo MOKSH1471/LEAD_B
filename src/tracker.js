@@ -134,7 +134,8 @@ function getRepliedEmailsSet() {
   return set;
 }
 
-function getLeadsDueForFollowUp() {
+function getLeadsDueForFollowUp(options = {}) {
+  const force = options.force === true;
   loadContacted();
   const repliedSet = getRepliedEmailsSet();
   const dueLeads = [];
@@ -166,20 +167,23 @@ function getLeadsDueForFollowUp() {
     if (!lastTime || isNaN(lastTime)) continue;
 
     const elapsedMs = now - lastTime;
+    const elapsedDays = (elapsedMs / (1000 * 60 * 60 * 24)).toFixed(1);
 
-    if (currentStage === 0 && elapsedMs >= delay1Ms) {
+    if (currentStage === 0 && (force || elapsedMs >= delay1Ms)) {
       dueLeads.push({
         ...lead,
         email: cleanEmail,
         targetStage: 1,
-        elapsedDays: (elapsedMs / (1000 * 60 * 60 * 24)).toFixed(1),
+        elapsedDays,
+        forced: force && elapsedMs < delay1Ms,
       });
-    } else if (currentStage === 1 && elapsedMs >= delay2Ms) {
+    } else if (currentStage === 1 && (force || elapsedMs >= delay2Ms)) {
       dueLeads.push({
         ...lead,
         email: cleanEmail,
         targetStage: 2,
-        elapsedDays: (elapsedMs / (1000 * 60 * 60 * 24)).toFixed(1),
+        elapsedDays,
+        forced: force && elapsedMs < delay2Ms,
       });
     }
   }
