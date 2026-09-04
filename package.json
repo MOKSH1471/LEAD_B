@@ -6,7 +6,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
-    "telegram": "node src/telegramBot.js"
+    "telegram": "node src/telegramBot.js",
+    "autopilot": "node src/autopilot.js",
+    "followups": "node -e \"require('./src/followUpEngine').runFollowUpSweep()\""
   },
   "keywords": [
     "lead-gen",

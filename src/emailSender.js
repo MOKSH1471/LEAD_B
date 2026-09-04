@@ -9,18 +9,38 @@ function getTransporter() {
   if (!transporter && config.gmailUser && config.gmailAppPassword) {
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
+      port: 587,          // STARTTLS — works on Render, Railway, and all cloud platforms
+      secure: false,      // false = STARTTLS upgrade after connection (NOT plain text)
+      requireTLS: true,   // Enforces TLS upgrade; rejects plaintext connections
       auth: {
         user: config.gmailUser,
         pass: config.gmailAppPassword,
       },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 20000,
+      connectionTimeout: 20000,
+      greetingTimeout: 20000,
+      socketTimeout: 30000,
     });
   }
   return transporter;
+}
+
+/**
+ * Verifies SMTP connectivity at startup. Logs a clear warning if unreachable.
+ * Call this once on startup to catch misconfigured credentials early.
+ */
+async function verifySMTP() {
+  if (config.dryRun) return true; // Skip SMTP check in dry-run mode
+  const client = getTransporter();
+  if (!client) return false;
+  try {
+    await client.verify();
+    console.log('✅ [SMTP] Gmail connection verified successfully (port 587 STARTTLS).');
+    return true;
+  } catch (err) {
+    console.error(`❌ [SMTP] Gmail connection FAILED: ${err.message}`);
+    console.error('   → Check GMAIL_USER, GMAIL_APP_PASSWORD, and that 2-Step Verification + App Password are enabled.');
+    return false;
+  }
 }
 
 /**
@@ -85,4 +105,5 @@ async function sendEmail({ to, subject, body, businessName }) {
 
 module.exports = {
   sendEmail,
+  verifySMTP,
 };

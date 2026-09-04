@@ -1,6 +1,7 @@
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
 const { config } = require('./config');
+const { markLeadReplied } = require('./tracker');
 const fs = require('fs');
 const path = require('path');
 
@@ -123,6 +124,13 @@ function startReplyTracker(onNewReply) {
             notifiedSet.add(uid);
             saveNotified();
             saveReply(replyData);
+
+            // Immediately mark lead as replied so all future follow-ups are halted!
+            try {
+              markLeadReplied(matchedKey || fromAddress, replyData);
+            } catch (trackerErr) {
+              console.warn('Could not update tracker for reply:', trackerErr.message);
+            }
 
             console.log(`\n🚨 [LEAD REPLY] New reply from "${replyData.businessName}" (${replyData.fromEmail})!`);
 

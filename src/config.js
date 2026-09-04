@@ -36,6 +36,24 @@ const config = {
   // Safety & throttling
   dryRun: getEnv('DRY_RUN', 'true').toLowerCase() === 'true',
   emailDelayMs: parseInt(getEnv('EMAIL_DELAY_MS', '15000'), 10),
+
+  // Follow-Up Configuration
+  followUpDelayDays: parseFloat(getEnv('FOLLOWUP_DELAY_DAYS', '3')), // Days before Stage 1 follow-up
+  followUpFinalDelayDays: parseFloat(getEnv('FOLLOWUP_FINAL_DELAY_DAYS', '4')), // Days after Stage 1 before Stage 2 breakup
+  maxFollowUps: parseInt(getEnv('MAX_FOLLOWUPS', '2'), 10),
+
+  // Autopilot Autonomous Client Prospecting & Follow-Up
+  autopilotEnabled: getEnv('AUTOPILOT_ENABLED', 'false').toLowerCase() === 'true',
+  autopilotIntervalHours: parseFloat(getEnv('AUTOPILOT_INTERVAL_HOURS', '12')),
+  autopilotBatchSize: parseInt(getEnv('AUTOPILOT_BATCH_SIZE', '5'), 10),
+  autopilotNiches: (getEnv('AUTOPILOT_NICHES', 'dentists, gyms, plumbers, roofing, chiropractors'))
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean),
+  autopilotRegions: (getEnv('AUTOPILOT_REGIONS', 'Austin, TX; Miami, FL; Chicago, IL; Dallas, TX; Phoenix, AZ'))
+    .split(';')
+    .map(s => s.trim())
+    .filter(Boolean),
 };
 
 function validateConfig() {

@@ -2,7 +2,11 @@ const express = require('express');
 const { Telegraf } = require('telegraf');
 const { config, validateConfig } = require('./config');
 const { runCampaign } = require('./pipeline');
+const { verifySMTP } = require('./emailSender');
 const { startReplyTracker, getAllReplies } = require('./replyTracker');
+const { runFollowUpSweep } = require('./followUpEngine');
+const { getFollowUpQueueStats } = require('./tracker');
+const { startAutopilot, stopAutopilot, getAutopilotStatus } = require('./autopilot');
 const fs = require('fs');
 const path = require('path');
 
@@ -52,7 +56,7 @@ let shouldStopCurrentCampaign = false;
 // 📬 Send alert to Telegram subscribers when a lead replies
 function notifyLeadReply(reply) {
   const alertText = `
-🚨 *NEW LEAD REPLY RECEIVED!*
+🚨 *NEW CLIENT RESPONSE RECEIVED!*
 🏢 *Business:* *${reply.businessName}*
 📧 *From:* \`${reply.fromEmail}\`
 📝 *Subject:* \`${reply.subject}\`
@@ -61,6 +65,7 @@ function notifyLeadReply(reply) {
 💬 *Message Preview:*
 "${reply.snippet}"
 
+🛑 *Automated follow-ups for this lead have been automatically HALTED.*
 👉 _Check your Gmail (${config.gmailUser}) to reply directly!_
 `;
 
@@ -79,7 +84,7 @@ const replyTracker = startReplyTracker(notifyLeadReply);
 const HELP_TEXT = `
 🤖 *Lead-Gen Outreach Bot — Command Center*
 
-📌 *Start a Campaign:*
+📌 *Manual Campaign:*
 • \`/run <niche> in <city, state> [count]\`
   _Example:_ \`/run gym in Miami, FL 10\`
   _Example:_ \`/run dentists in Austin, TX 5\`
@@ -87,15 +92,21 @@ const HELP_TEXT = `
   \`boutique hotels in Miami, FL 10\`
   \`plumbers in Chicago, IL\`
 
+🤖 *Autopilot Autonomous Hunter (24/7):*
+• \`/autopilot on\` — Start automatic client searches & follow-up sweeps
+• \`/autopilot off\` — Pause autopilot
+• \`/autopilot status\` — View next run, target niches & cities
+
+📬 *Automated Follow-Ups:*
+• \`/followups\` — View follow-up queue breakdown (Stage 1 & Stage 2)
+• \`/followups run\` — Trigger an immediate follow-up sweep right now
+
 🛑 *Campaign Controls:*
-• \`/stop\` or \`/cancel\`
-  _Instantly halts the active campaign immediately._
+• \`/stop\` or \`/cancel\` — Instantly halts active campaign or sweep
 
 📬 *Lead Tracking & Replies:*
-• \`/replies\`
-  _Displays all responses received from prospects with email previews._
-• \`/status\`
-  _Shows ledger stats: total emails sent, active task state, and mode._
+• \`/replies\` — Displays responses received from prospects
+• \`/status\` — Full ledger stats, queue state, and system mode
 
 ⚙️ *Mode Settings:*
 • \`/dryrun on\` — Preview mode (no real emails sent)
@@ -108,7 +119,7 @@ const HELP_TEXT = `
 // Start Command
 bot.start((ctx) => {
   registerChat(ctx.chat.id);
-  const welcome = `👋 *Welcome to your 24/7 Lead-Gen & Outreach Bot!*\n` + HELP_TEXT;
+  const welcome = `👋 *Welcome to your Lead-Gen & Outreach Bot!*\n` + HELP_TEXT;
   return ctx.replyWithMarkdown(welcome);
 });
 
@@ -142,10 +153,120 @@ bot.command('status', (ctx) => {
     }
 
     const repliesCount = getAllReplies().length;
+    const fuStats = getFollowUpQueueStats();
+    const apStatus = getAutopilotStatus();
 
-    ctx.replyWithMarkdown(`📊 *Outreach Ledger Status*\n• Unique Emails Contacted: *${totalEmails}*\n• Replies Received: *${repliesCount}*\n• Places Processed: *${totalPlaces}*\n• Sender: \`${config.fromName} (${config.gmailUser})\`\n• Active Task: *${isRunning ? '🏃 RUNNING' : '💤 IDLE'}*\n• Mode: *${config.dryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}*`);
+    ctx.replyWithMarkdown(
+      `📊 *Lead-Gen Command Center Status*\n\n` +
+      `• *Outreach Ledger:* ${totalEmails} emails contacted, ${totalPlaces} places\n` +
+      `• *Replies Received:* ${repliesCount} total\n` +
+      `• *Follow-Ups Due NOW:* *${fuStats.dueNow}* (Waiting S1: ${fuStats.stage0Waiting}, Waiting S2: ${fuStats.stage1Waiting})\n` +
+      `• *Autopilot:* ${apStatus.isActive ? '🟢 RUNNING' : '⚪ STOPPED'}${apStatus.nextRunAt ? ` (Next: ${new Date(apStatus.nextRunAt).toLocaleTimeString()})` : ''}\n` +
+      `• *Sender:* \`${config.fromName} (${config.gmailUser})\`\n` +
+      `• *Active Task:* *${isRunning ? '🏃 RUNNING' : '💤 IDLE'}*\n` +
+      `• *Mode:* *${config.dryRun ? 'DRY RUN (Preview)' : '⚡ LIVE (Sending)'}*`
+    );
   } catch (err) {
     ctx.reply(`⚠️ Could not read ledger: ${err.message}`);
+  }
+});
+
+// Autopilot Command
+bot.command('autopilot', async (ctx) => {
+  registerChat(ctx.chat.id);
+  const parts = ctx.message.text.split(' ');
+  const sub = parts[1] ? parts[1].toLowerCase() : '';
+
+  if (sub === 'on') {
+    const started = startAutopilot({
+      onProgress: async (msg) => {
+        subscribers.forEach((chatId) => {
+          try {
+            bot.telegram.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
+          } catch (e) {
+            bot.telegram.sendMessage(chatId, msg.replace(/[*_`]/g, ''));
+          }
+        });
+      },
+    });
+    if (started) {
+      ctx.replyWithMarkdown('🤖 *Autopilot Started!*\nThe bot will now autonomously search clients and send multi-stage follow-ups around the clock.\nSend `/autopilot status` to view upcoming runs.');
+    } else {
+      ctx.replyWithMarkdown('ℹ️ *Autopilot is already active!* Send `/autopilot status` for details.');
+    }
+  } else if (sub === 'off') {
+    stopAutopilot();
+    ctx.replyWithMarkdown('🛑 *Autopilot Stopped.* (Automatic client searching and follow-ups are paused).');
+  } else if (sub === 'status') {
+    const st = getAutopilotStatus();
+    ctx.replyWithMarkdown(
+      `🤖 *Autopilot Engine Status*\n` +
+      `• Status: *${st.isActive ? '🟢 RUNNING (24/7 Autopilot)' : '⚪ STOPPED'}*\n` +
+      `• Current Cycle: *${st.isCycleInProgress ? '🏃 Actively executing' : '💤 Idle (waiting for next run)'}*\n` +
+      `• Interval: *Every ${st.intervalHours} hours*\n` +
+      `• Batch Size: *${st.batchSize} leads per run*\n` +
+      `• Cycles Completed: *${st.totalCyclesCompleted}*\n` +
+      `• Next Run At: _${st.nextRunAt ? new Date(st.nextRunAt).toLocaleString() : 'Not scheduled'}_\n` +
+      `• Next Target: *${st.nextTarget.niche}* in *${st.nextTarget.region}*\n` +
+      `• Configured Niches: \`${st.configuredNiches.join(', ')}\`\n` +
+      `• Configured Cities: \`${st.configuredRegions.join('; ')}\``
+    );
+  } else {
+    const st = getAutopilotStatus();
+    ctx.replyWithMarkdown(
+      `🤖 *Autopilot Autonomous Hunter*\n` +
+      `Current State: *${st.isActive ? '🟢 RUNNING' : '⚪ STOPPED'}*\n\n` +
+      `Commands:\n` +
+      `• \`/autopilot on\` — Start 24/7 autonomous prospecting & follow-ups\n` +
+      `• \`/autopilot off\` — Stop autopilot\n` +
+      `• \`/autopilot status\` — View schedule and upcoming targets`
+    );
+  }
+});
+
+// Follow-Ups Command
+bot.command('followups', async (ctx) => {
+  registerChat(ctx.chat.id);
+  const parts = ctx.message.text.split(' ');
+  const sub = parts[1] ? parts[1].toLowerCase() : '';
+
+  if (sub === 'run' || sub === 'now') {
+    if (isRunning) {
+      return ctx.replyWithMarkdown('⚠️ A task is currently running. Send /stop to halt it first.');
+    }
+    isRunning = true;
+    shouldStopCurrentCampaign = false;
+    ctx.replyWithMarkdown('📬 *Starting manual follow-up sweep...*');
+    try {
+      await runFollowUpSweep({
+        dryRun: config.dryRun,
+        onProgress: async (msg) => {
+          try {
+            await ctx.replyWithMarkdown(msg);
+          } catch (e) {
+            await ctx.reply(msg.replace(/[*_`]/g, ''));
+          }
+        },
+        shouldAbort: () => shouldStopCurrentCampaign,
+      });
+    } catch (err) {
+      ctx.reply(`❌ Follow-up sweep error: ${err.message}`);
+    } finally {
+      isRunning = false;
+      shouldStopCurrentCampaign = false;
+    }
+  } else {
+    const stats = getFollowUpQueueStats();
+    ctx.replyWithMarkdown(
+      `📬 *Automated Follow-Up Queue Breakdown*\n` +
+      `• ⚡ *Due for Follow-Up NOW:* *${stats.dueNow}*\n` +
+      `• ⏳ Waiting for Stage 1 (Day 3 Soft Bump): *${stats.stage0Waiting}*\n` +
+      `• ⏳ Waiting for Stage 2 (Day 7 Breakup): *${stats.stage1Waiting}*\n` +
+      `• 🏁 Completed Follow-Up Sequence: *${stats.stage2Completed}*\n` +
+      `• 💬 Prospects Who Replied: *${stats.totalReplied}*\n` +
+      `• Total Email Leads in Ledger: *${stats.totalTracked}*\n\n` +
+      `👉 Send \`/followups run\` to execute an immediate follow-up sweep right now!`
+    );
   }
 });
 
@@ -273,19 +394,18 @@ bot.on('text', (ctx) => {
   }
 });
 
-// 🌐 Express Server for Cloud Health Checks & Webhooks
+// Express Server
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const secretPath = `/webhook/telegram/${token.replace(/[^a-zA-Z0-9]/g, '')}`;
 
-// Health Check Endpoint
 app.get('/', (req, res) => {
-  res.send('Galileo & Duke Lead Bot is running live!\n');
+  res.send('Galileo & Duke Lead Bot is running!\n');
 });
 
-// Telegram Webhook Handler (Instantly ack 200 to prevent connection timeouts)
+// Telegram Webhook Handler
 app.post(secretPath, (req, res) => {
   res.status(200).send('OK');
   setImmediate(() => {
@@ -297,43 +417,72 @@ app.post(secretPath, (req, res) => {
   });
 });
 
-// Gmail Push Webhook
-app.post('/webhook/gmail', async (req, res) => {
-  res.status(200).send('OK');
-  if (replyTracker && typeof replyTracker.checkNow === 'function') {
-    await replyTracker.checkNow();
-  }
-});
-
 const WEBHOOK_URL = process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL;
 
-app.listen(PORT, async () => {
-  console.log(`🌐 Server active on port ${PORT}`);
+async function startBot() {
   if (WEBHOOK_URL) {
     const fullWebhookUrl = `${WEBHOOK_URL}${secretPath}`;
-    try {
-      await bot.telegram.setWebhook(fullWebhookUrl);
-      console.log(`⚡ Telegram Webhook linked to: ${fullWebhookUrl}`);
-    } catch (e) {
-      console.warn('⚠️ Webhook link note:', e.message);
-    }
+    app.listen(PORT, async () => {
+      console.log(`🌐 Cloud Webhook Server running on port ${PORT}`);
+      try {
+        await bot.telegram.setWebhook(fullWebhookUrl);
+        console.log(`⚡ Telegram Webhook linked to: ${fullWebhookUrl}`);
+      } catch (e) {
+        console.warn('⚠️ Webhook link note:', e.message);
+      }
+    });
   } else {
-    bot.launch().then(() => console.log('🤖 Polling started.'));
+    // RUNNING LOCALLY: Clear any cloud webhook so Telegram routes all messages directly to this laptop!
+    try {
+      await bot.telegram.deleteWebhook({ drop_pending_updates: false });
+      console.log('⚡ Cleared cloud webhook. Connecting directly to Telegram via local polling...');
+    } catch (e) {}
+
+    bot.launch().then(async () => {
+      console.log('🤖 Telegram Bot is connected and running locally on your laptop!\n');
+
+      // Verify Gmail SMTP works at startup — catch credential/port issues immediately
+      const smtpOk = await verifySMTP();
+      if (!smtpOk && !config.dryRun) {
+        const warnMsg = '⚠️ *SMTP Warning:* Gmail connection failed at startup.\nEmails will NOT be sent until this is fixed.\n→ Check `GMAIL_USER` and `GMAIL_APP_PASSWORD` in your environment variables.';
+        subscribers.forEach(chatId => {
+          try { bot.telegram.sendMessage(chatId, warnMsg, { parse_mode: 'Markdown' }); } catch (e) {}
+        });
+      }
+
+      if (config.autopilotEnabled) {
+        console.log('🤖 AUTOPILOT_ENABLED=true: Auto-starting background client prospecting & follow-ups...');
+        startAutopilot({
+          onProgress: async (msg) => {
+            subscribers.forEach((chatId) => {
+              try {
+                bot.telegram.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
+              } catch (e) {
+                bot.telegram.sendMessage(chatId, msg.replace(/[*_`]/g, ''));
+              }
+            });
+          },
+        });
+      }
+    });
   }
-});
+}
+
+startBot();
 
 bot.catch((err, ctx) => {
   console.error(`Telegram Bot Error for ${ctx.updateType}:`, err);
 });
 
-// Safe shutdown
 process.once('SIGINT', () => {
   try {
+    bot.stop('SIGINT');
     process.exit(0);
   } catch (e) {}
 });
 process.once('SIGTERM', () => {
   try {
+    bot.stop('SIGTERM');
     process.exit(0);
   } catch (e) {}
 });

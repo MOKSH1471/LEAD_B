@@ -152,6 +152,10 @@ async function runCampaign(options = {}) {
         name: biz.name,
         status: finalStatus,
         pointers: analysis.pointers,
+        subject: analysis.subject,
+        website: biz.website || siteInfo.url,
+        niche,
+        region,
       });
 
       if (emailResult.success) {
