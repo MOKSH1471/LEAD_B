@@ -1,0 +1,26 @@
+[
+  {
+    "id": "inbox_primary",
+    "email": "primary.growth@gmail.com",
+    "appPassword": "xxxx xxxx xxxx xxxx",
+    "fromName": "Moksh Desai",
+    "niches": ["*"],
+    "dailyCap": 100
+  },
+  {
+    "id": "inbox_dental",
+    "email": "dental.specialist@gmail.com",
+    "appPassword": "xxxx xxxx xxxx xxxx",
+    "fromName": "Moksh | Dental Growth",
+    "niches": ["dentists", "orthodontists", "clinics"],
+    "dailyCap": 100
+  },
+  {
+    "id": "inbox_legal",
+    "email": "legal.sites@gmail.com",
+    "appPassword": "xxxx xxxx xxxx xxxx",
+    "fromName": "Moksh | Legal Studio",
+    "niches": ["lawyers", "attorneys", "law firms"],
+    "dailyCap": 100
+  }
+]

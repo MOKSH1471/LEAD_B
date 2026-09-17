@@ -82,14 +82,25 @@ async function executeAutopilotCycle({ onProgress = console.log, onAlert = () =>
 
     await notify(`🎯 *[Autopilot Step 2/2]* Prospecting new clients:\n• *Niche:* ${currentNiche}\n• *Region:* ${currentRegion}\n• *Batch Goal:* ${config.autopilotBatchSize} emails`);
 
-    await runCampaign({
-      niche: currentNiche,
-      region: currentRegion,
-      maxResults: config.autopilotBatchSize,
-      dryRun: config.dryRun,
-      onProgress: notify,
-      shouldAbort: () => shouldAbortCurrentCycle,
-    });
+    try {
+      const { discoveryQueue } = require('./queues');
+      await discoveryQueue.add('discover', {
+        niche: currentNiche,
+        region: currentRegion,
+        maxResults: config.autopilotBatchSize,
+      });
+      await notify(`🚀 *[Autopilot]* Queued job to Discovery Agent for ${config.autopilotBatchSize} ${currentNiche} in ${currentRegion}!`);
+    } catch (queueErr) {
+      console.warn(`[Autopilot] Queue unavailable, falling back to legacy runCampaign:`, queueErr.message);
+      await runCampaign({
+        niche: currentNiche,
+        region: currentRegion,
+        maxResults: config.autopilotBatchSize,
+        dryRun: config.dryRun,
+        onProgress: notify,
+        shouldAbort: () => shouldAbortCurrentCycle,
+      });
+    }
 
     // Advance rotation indices for next cycle
     state.regionIndex = (state.regionIndex + 1) % regions.length;

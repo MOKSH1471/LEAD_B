@@ -7,6 +7,8 @@ const { startReplyTracker, getAllReplies } = require('./replyTracker');
 const { runFollowUpSweep } = require('./followUpEngine');
 const { getFollowUpQueueStats } = require('./tracker');
 const { startAutopilot, stopAutopilot, getAutopilotStatus } = require('./autopilot');
+const db = require('./db');
+const { discoveryQueue, getQueueMetrics } = require('./queues');
 const fs = require('fs');
 const path = require('path');
 
@@ -103,7 +105,14 @@ const HELP_TEXT = `
 • \`/followups force\` — Send follow-ups *EARLY right now* (bypasses 3-day waiting period)
 
 🛑 *Campaign Controls:*
-• \`/stop\` or \`/cancel\` — Instantly halts active campaign or sweep
+• \`/stop\` or \`/cancel\` — Instantly halts active legacy campaign
+
+⚡ *Multi-Agent Pipeline Commands:*
+• \`/pipeline\` — Real-time funnel (raw → verified → queued → sent today)
+• \`/inboxes\` — View inbox accounts, niche assignments & health status
+• \`/queue\` — Live BullMQ queue depths across all 4 stages
+• \`/pause <inbox_id>\` — Pause an inbox from dispatching
+• \`/resume <inbox_id>\` — Resume a paused inbox
 
 📬 *Lead Tracking & Replies:*
 • \`/replies\` — Displays responses received from prospects
@@ -325,8 +334,137 @@ bot.command('dryrun', (ctx) => {
   }
 });
 
+// Pipeline Funnel Stats Command
+bot.command('pipeline', (ctx) => {
+  registerChat(ctx.chat.id);
+  try {
+    const rawCount = db.prepare('SELECT count(*) as c FROM leads_raw').get()?.c || 0;
+    const verifiedCount = db.prepare('SELECT count(*) as c FROM leads_verified').get()?.c || 0;
+    const readyQueue = db.prepare("SELECT count(*) as c FROM send_queue WHERE status = 'ready'").get()?.c || 0;
+    const flaggedQueue = db.prepare("SELECT count(*) as c FROM send_queue WHERE status = 'flagged'").get()?.c || 0;
+    const sentCount = db.prepare('SELECT count(*) as c FROM sent_log').get()?.c || 0;
+    const repliedCount = db.prepare('SELECT count(*) as c FROM sent_log WHERE replied = 1').get()?.c || 0;
+    const bouncedCount = db.prepare('SELECT count(*) as c FROM sent_log WHERE bounced = 1').get()?.c || 0;
+    const sentToday = db.prepare('SELECT sum(sent_today) as c FROM inboxes').get()?.c || 0;
+
+    const text =
+      `📊 *Multi-Agent Pipeline Funnel*\n\n` +
+      `1️⃣ *Raw Leads Discovered:* \`${rawCount}\`\n` +
+      `2️⃣ *Verified Leads (MX Valid):* \`${verifiedCount}\`\n` +
+      `3️⃣ *Send Queue (Ready):* \`${readyQueue}\`\n` +
+      `   ↳ *Flagged for Review:* \`${flaggedQueue}\`\n` +
+      `4️⃣ *Total Emails Dispatched:* \`${sentCount}\`\n` +
+      `   ↳ *Dispatched Today:* \`${sentToday}\`\n\n` +
+      `📈 *Deliverability & Outcomes:*\n` +
+      `• *Replies:* \`${repliedCount}\`\n` +
+      `• *Bounces:* \`${bouncedCount}\`\n` +
+      `• *Mode:* \`${config.dryRun ? 'DRY RUN (Preview)' : '⚡ LIVE'}\``;
+
+    return ctx.replyWithMarkdown(text);
+  } catch (err) {
+    return ctx.reply(`❌ Failed to read pipeline database: ${err.message}`);
+  }
+});
+
+// Inboxes Command
+bot.command('inboxes', (ctx) => {
+  registerChat(ctx.chat.id);
+  try {
+    const inboxes = db.prepare('SELECT id, email, niches, daily_cap, sent_today, health_status FROM inboxes').all();
+    if (!inboxes || inboxes.length === 0) {
+      return ctx.replyWithMarkdown('ℹ️ *No inboxes registered.* Check `config/inboxes.json`.');
+    }
+
+    let text = `📬 *Sender Inbox Pool (${inboxes.length}):*\n\n`;
+    inboxes.forEach((ib, idx) => {
+      const statusIcon = ib.health_status === 'active' ? '🟢' : '🛑';
+      text += `*${idx + 1}. [${ib.id}]* ${statusIcon} *${ib.health_status.toUpperCase()}*\n` +
+        `• Email: \`${ib.email}\`\n` +
+        `• Niches: \`${ib.niches || '*'}\`\n` +
+        `• Today's Progress: \`${ib.sent_today} / ${ib.daily_cap}\` emails\n\n`;
+    });
+
+    return ctx.replyWithMarkdown(text);
+  } catch (err) {
+    return ctx.reply(`❌ Failed to read inboxes: ${err.message}`);
+  }
+});
+
+// BullMQ Live Queue Status Command
+bot.command('queue', async (ctx) => {
+  registerChat(ctx.chat.id);
+  try {
+    const metrics = await getQueueMetrics();
+    let text = `⚡ *BullMQ Live Queue Health:*\n\n`;
+    for (const [qName, counts] of Object.entries(metrics)) {
+      if (counts.error) {
+        text += `• *${qName.toUpperCase()}:* ⚠️ Offline (${counts.error})\n`;
+      } else {
+        text += `• *${qName.toUpperCase()}:* Waiting: \`${counts.waiting}\` | Active: \`${counts.active}\` | Completed: \`${counts.completed}\` | Failed: \`${counts.failed}\`\n`;
+      }
+    }
+    return ctx.replyWithMarkdown(text);
+  } catch (err) {
+    return ctx.reply(`❌ Failed to query queues: ${err.message}`);
+  }
+});
+
+// Pause / Resume Inboxes
+bot.command('pause', (ctx) => {
+  registerChat(ctx.chat.id);
+  const parts = ctx.message.text.split(' ');
+  const inboxId = parts[1];
+  if (!inboxId) {
+    return ctx.replyWithMarkdown('⚠️ Usage: `/pause <inbox_id>` (e.g. `/pause inbox_primary`)');
+  }
+  const res = db.prepare("UPDATE inboxes SET health_status = 'paused' WHERE id = ?").run(inboxId);
+  if (res.changes > 0) {
+    return ctx.replyWithMarkdown(`🛑 Inbox \`${inboxId}\` has been *paused*.`);
+  } else {
+    return ctx.replyWithMarkdown(`❌ Inbox \`${inboxId}\` not found.`);
+  }
+});
+
+bot.command('resume', (ctx) => {
+  registerChat(ctx.chat.id);
+  const parts = ctx.message.text.split(' ');
+  const inboxId = parts[1];
+  if (!inboxId) {
+    return ctx.replyWithMarkdown('⚠️ Usage: `/resume <inbox_id>` (e.g. `/resume inbox_primary`)');
+  }
+  const res = db.prepare("UPDATE inboxes SET health_status = 'active' WHERE id = ?").run(inboxId);
+  if (res.changes > 0) {
+    return ctx.replyWithMarkdown(`🟢 Inbox \`${inboxId}\` has been *resumed*.`);
+  } else {
+    return ctx.replyWithMarkdown(`❌ Inbox \`${inboxId}\` not found.`);
+  }
+});
+
 // Campaign Trigger Function
 async function triggerCampaign(chatId, niche, region, count = 10) {
+  try {
+    await discoveryQueue.add('discover', {
+      niche,
+      region,
+      maxResults: count,
+    });
+
+    bot.telegram.sendMessage(
+      chatId,
+      `🚀 *[Pipeline Job Queued]*\n\n` +
+      `• *Niche:* \`${niche}\`\n` +
+      `• *Region:* \`${region}\`\n` +
+      `• *Target:* \`${count} leads\`\n` +
+      `• *Worker:* \`Discovery Agent\`\n\n` +
+      `_The 5-agent pipeline will process discovery, verification, personalization, and dispatch in the background._\n` +
+      `_Type /pipeline or /queue to monitor progress._`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  } catch (queueErr) {
+    console.warn('[Telegram] Queue unavailable, falling back to legacy synchronous campaign:', queueErr.message);
+  }
+
   if (isRunning) {
     bot.telegram.sendMessage(chatId, '⚠️ Another campaign is currently running. Send /stop to halt it first.');
     return;

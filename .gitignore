@@ -7,5 +7,6 @@ replies.json
 notified_replies.json
 subscribers.json
 test_search.js
-.DS_Store
-*.log
+config/inboxes.json
+data/
+*.db

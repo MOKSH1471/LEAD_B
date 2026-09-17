@@ -8,7 +8,10 @@
     "start": "node src/index.js",
     "telegram": "node src/telegramBot.js",
     "autopilot": "node src/autopilot.js",
-    "followups": "node -e \"require('./src/followUpEngine').runFollowUpSweep()\""
+    "followups": "node -e \"require('./src/followUpEngine').runFollowUpSweep()\"",
+    "agents": "pm2 start ecosystem.config.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js"
   },
   "keywords": [
     "lead-gen",
@@ -23,14 +26,18 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.9",
+    "better-sqlite3": "^13.0.3",
+    "bullmq": "^6.3.4",
     "cheerio": "^1.0.0",
     "csv-writer": "^1.6.0",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "imapflow": "^1.7.8",
+    "ioredis": "^6.0.0",
     "mailparser": "^3.9.20",
     "node-telegram-bot-api": "^0.66.0",
     "nodemailer": "^6.10.0",
+    "pm2": "^7.0.4",
     "telegraf": "^4.16.3"
   }
 }
