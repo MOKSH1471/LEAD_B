@@ -62,13 +62,14 @@ function isEmailContacted(email) {
   return Boolean(contactedData.emails[cleanEmail]);
 }
 
-function recordContacted({ placeId, email, name, status, pointers, subject, website, niche, region }) {
+function recordContacted({ placeId, email, name, status, pointers, subject, website, niche, region, senderEmail }) {
   const timestamp = new Date().toISOString();
   const cleanEmail = email ? email.toLowerCase().trim() : '';
 
   const entry = {
     name: name || 'Prospect',
     email: cleanEmail,
+    senderEmail: senderEmail || '',
     website: website || '',
     niche: niche || config.niche,
     region: region || config.region,
@@ -311,6 +312,73 @@ async function logResult(row) {
   appendToCsv(RESULTS_CSV, header, data);
 }
 
+/**
+ * Summarizes all unreplied emails and provides structured data + formatted messages.
+ */
+function getUnrepliedSummary() {
+  loadContacted();
+  const repliedSet = getRepliedEmailsSet();
+  const now = Date.now();
+  const unrepliedList = [];
+  let repliedCount = 0;
+  let totalContacted = 0;
+
+  const delay1Ms = (config.followUpDelayDays || 3) * 24 * 60 * 60 * 1000;
+  const delay2Ms = (config.followUpFinalDelayDays || 4) * 24 * 60 * 60 * 1000;
+
+  for (const [emailKey, lead] of Object.entries(contactedData.emails)) {
+    const cleanEmail = emailKey.toLowerCase().trim();
+    totalContacted++;
+
+    if (lead.hasReplied || repliedSet.has(cleanEmail)) {
+      repliedCount++;
+      continue;
+    }
+
+    if (lead.status !== 'sent' && lead.status !== 'dry_run_preview') {
+      continue;
+    }
+
+    const lastTime = new Date(lead.lastContactedAt || lead.contactedAt || 0).getTime();
+    const elapsedMs = lastTime ? (now - lastTime) : 0;
+    const elapsedDays = lastTime ? (elapsedMs / (1000 * 60 * 60 * 24)).toFixed(1) : '0.0';
+    const stage = lead.followUpStage !== undefined ? lead.followUpStage : 0;
+
+    let followUpStatus = 'Awaiting response';
+    if (stage === 0 && elapsedMs >= delay1Ms) {
+      followUpStatus = '⚡ Due for Stage 1 Follow-up';
+    } else if (stage === 1 && elapsedMs >= delay2Ms) {
+      followUpStatus = '⚡ Due for Final Breakup';
+    } else if (stage >= 2) {
+      followUpStatus = 'Completed all stages (no reply)';
+    }
+
+    unrepliedList.push({
+      name: lead.name || 'Prospect',
+      email: cleanEmail,
+      subject: lead.subject || 'Website Proposal',
+      contactedAt: lead.contactedAt || lead.lastContactedAt,
+      daysWaiting: elapsedDays,
+      followUpStage: stage,
+      followUpStatus,
+    });
+  }
+
+  // Sort descending by days waiting
+  unrepliedList.sort((a, b) => parseFloat(b.daysWaiting) - parseFloat(a.daysWaiting));
+
+  const unrepliedCount = unrepliedList.length;
+  const dueCount = unrepliedList.filter(l => l.followUpStatus.startsWith('⚡')).length;
+
+  return {
+    totalContacted,
+    repliedCount,
+    unrepliedCount,
+    dueCount,
+    unrepliedList,
+  };
+}
+
 module.exports = {
   isPlaceContacted,
   isEmailContacted,
@@ -320,4 +388,5 @@ module.exports = {
   getFollowUpQueueStats,
   recordFollowUpSent,
   logResult,
+  getUnrepliedSummary,
 };

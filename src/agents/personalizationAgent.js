@@ -30,7 +30,7 @@ async function critiqueDraft(businessName, niche, subject, body) {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
     const prompt = `
 You are a cold email deliverability and conversion quality auditor.
 Score the following email draft written for "${businessName}" in the "${niche}" niche.

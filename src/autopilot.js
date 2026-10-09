@@ -84,12 +84,25 @@ async function executeAutopilotCycle({ onProgress = console.log, onAlert = () =>
 
     try {
       const { discoveryQueue } = require('./queues');
-      await discoveryQueue.add('discover', {
-        niche: currentNiche,
-        region: currentRegion,
-        maxResults: config.autopilotBatchSize,
-      });
-      await notify(`🚀 *[Autopilot]* Queued job to Discovery Agent for ${config.autopilotBatchSize} ${currentNiche} in ${currentRegion}!`);
+      const workers = await discoveryQueue.getWorkers();
+      if (workers && workers.length > 0) {
+        await discoveryQueue.add('discover', {
+          niche: currentNiche,
+          region: currentRegion,
+          maxResults: config.autopilotBatchSize,
+        });
+        await notify(`🚀 *[Autopilot]* Queued job to Discovery Agent for ${config.autopilotBatchSize} ${currentNiche} in ${currentRegion} (${workers.length} active worker agents)!`);
+      } else {
+        await notify(`🤖 *[Autopilot]* Running direct campaign for ${config.autopilotBatchSize} ${currentNiche} in ${currentRegion}...`);
+        await runCampaign({
+          niche: currentNiche,
+          region: currentRegion,
+          maxResults: config.autopilotBatchSize,
+          dryRun: config.dryRun,
+          onProgress: notify,
+          shouldAbort: () => shouldAbortCurrentCycle,
+        });
+      }
     } catch (queueErr) {
       console.warn(`[Autopilot] Queue unavailable, falling back to legacy runCampaign:`, queueErr.message);
       await runCampaign({

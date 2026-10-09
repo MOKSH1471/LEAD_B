@@ -443,24 +443,29 @@ bot.command('resume', (ctx) => {
 // Campaign Trigger Function
 async function triggerCampaign(chatId, niche, region, count = 10) {
   try {
-    await discoveryQueue.add('discover', {
-      niche,
-      region,
-      maxResults: count,
-    });
+    const workers = await discoveryQueue.getWorkers();
+    if (workers && workers.length > 0) {
+      await discoveryQueue.add('discover', {
+        niche,
+        region,
+        maxResults: count,
+      });
 
-    bot.telegram.sendMessage(
-      chatId,
-      `🚀 *[Pipeline Job Queued]*\n\n` +
-      `• *Niche:* \`${niche}\`\n` +
-      `• *Region:* \`${region}\`\n` +
-      `• *Target:* \`${count} leads\`\n` +
-      `• *Worker:* \`Discovery Agent\`\n\n` +
-      `_The 5-agent pipeline will process discovery, verification, personalization, and dispatch in the background._\n` +
-      `_Type /pipeline or /queue to monitor progress._`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
+      bot.telegram.sendMessage(
+        chatId,
+        `🚀 *[Pipeline Job Queued]*\n\n` +
+        `• *Niche:* \`${niche}\`\n` +
+        `• *Region:* \`${region}\`\n` +
+        `• *Target:* \`${count} leads\`\n` +
+        `• *Worker Pool:* \`${workers.length} active agent(s)\`\n\n` +
+        `_The 5-agent pipeline is processing discovery, verification, personalization, and dispatch in the background._\n` +
+        `_Type /pipeline or /queue to monitor progress._`,
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    } else {
+      console.log('[Telegram] No background workers active on BullMQ. Executing interactive campaign directly...');
+    }
   } catch (queueErr) {
     console.warn('[Telegram] Queue unavailable, falling back to legacy synchronous campaign:', queueErr.message);
   }

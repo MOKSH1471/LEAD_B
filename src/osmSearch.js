@@ -235,7 +235,7 @@ async function searchPlacesOSM(niche = config.niche, region = config.region, max
       const resp = await axios.post(endpoint, overpassQuery, {
         headers: {
           'Content-Type': 'text/plain',
-          'User-Agent': 'curl/8.4.0', // Essential to prevent HTTP 406
+          'User-Agent': 'LeadBot/1.0',
         },
         timeout: 12000,
       });

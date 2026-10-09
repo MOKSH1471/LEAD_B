@@ -15,6 +15,31 @@ function getEnv(key, defaultValue = undefined, required = false) {
 const rawGoogleKey = getEnv('GOOGLE_PLACES_API_KEY', '', false);
 const defaultProvider = rawGoogleKey ? 'google' : 'osm';
 
+const emailUser = getEnv('EMAIL_USER', getEnv('GMAIL_USER', '', false), false);
+const emailPass = getEnv('EMAIL_PASS', getEnv('GMAIL_APP_PASSWORD', '', false), false);
+
+// Intelligent provider detection:
+const isGmail = emailUser && emailUser.toLowerCase().endsWith('@gmail.com');
+const rawSmtpHost = process.env.SMTP_HOST;
+const rawImapHost = process.env.IMAP_HOST;
+
+// If active email is a gmail address, default to gmail servers unless explicitly forced to another server
+const resolvedSmtpHost = isGmail && (!rawSmtpHost || rawSmtpHost === 'smtp.titan.email')
+  ? 'smtp.gmail.com'
+  : (rawSmtpHost || 'smtp.titan.email');
+
+const resolvedImapHost = isGmail && (!rawImapHost || rawImapHost === 'imap.titan.email')
+  ? 'imap.gmail.com'
+  : (rawImapHost || 'imap.titan.email');
+
+const resolvedSmtpPort = resolvedSmtpHost === 'smtp.gmail.com'
+  ? 587
+  : parseInt(getEnv('SMTP_PORT', '465'), 10);
+
+const resolvedSmtpSecure = resolvedSmtpHost === 'smtp.gmail.com'
+  ? false
+  : getEnv('SMTP_SECURE', 'true').toLowerCase() === 'true';
+
 const config = {
   // Search Provider: 'osm' (OpenStreetMap - 100% Free, no keys/cards) or 'google' (Google Places API)
   searchProvider: getEnv('SEARCH_PROVIDER', defaultProvider).toLowerCase(),
@@ -23,18 +48,29 @@ const config = {
   googlePlacesApiKey: rawGoogleKey,
   geminiApiKey: getEnv('GEMINI_API_KEY', '', false),
 
-  // Gmail SMTP Settings
-  gmailUser: getEnv('GMAIL_USER', '', false),
-  gmailAppPassword: getEnv('GMAIL_APP_PASSWORD', '', false),
+  // Email / SMTP Settings (supports Titan / GoDaddy / Custom Domain / Gmail)
+  emailUser,
+  emailPass,
+  gmailUser: emailUser, // backward compatibility
+  gmailAppPassword: emailPass, // backward compatibility
   fromName: getEnv('FROM_NAME', 'Freelance Web Consultant'),
+
+  smtpHost: resolvedSmtpHost,
+  smtpPort: resolvedSmtpPort,
+  smtpSecure: resolvedSmtpSecure,
+
+  // IMAP Settings for Reply Tracking
+  imapHost: resolvedImapHost,
+  imapPort: parseInt(getEnv('IMAP_PORT', '993'), 10),
+  imapSecure: getEnv('IMAP_SECURE', 'true').toLowerCase() === 'true',
 
   // Search parameters
   niche: getEnv('NICHE', 'dentists'),
   region: getEnv('REGION', 'Austin, TX'),
-  maxResults: parseInt(getEnv('MAX_RESULTS', '20'), 10),
+  maxResults: parseInt(getEnv('MAX_RESULTS', '50'), 10),
 
   // Safety & throttling
-  dryRun: getEnv('DRY_RUN', 'true').toLowerCase() === 'true',
+  dryRun: getEnv('DRY_RUN', 'false').toLowerCase() === 'true',
   emailDelayMs: parseInt(getEnv('EMAIL_DELAY_MS', '15000'), 10),
 
   // Follow-Up Configuration
@@ -66,8 +102,8 @@ function validateConfig() {
   }
   
   if (!config.dryRun) {
-    if (!config.gmailUser) missing.push('GMAIL_USER');
-    if (!config.gmailAppPassword) missing.push('GMAIL_APP_PASSWORD');
+    if (!config.emailUser && !config.gmailUser) missing.push('EMAIL_USER (or GMAIL_USER)');
+    if (!config.emailPass && !config.gmailAppPassword) missing.push('EMAIL_PASS (or GMAIL_APP_PASSWORD)');
   }
 
   if (missing.length > 0) {

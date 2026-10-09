@@ -45,5 +45,14 @@ module.exports = {
         NODE_ENV: 'production',
       },
     },
+    {
+      name: 'telegram-bot',
+      script: 'src/telegramBot.js',
+      restart_delay: 3000,
+      max_restarts: 10,
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
   ],
 };

@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { config } = require('./config');
 const { searchPlaces } = require('./placesSearch');
 const { searchPlacesOSM } = require('./osmSearch');
@@ -7,6 +9,35 @@ const { checkWebsite } = require('./websiteCheck');
 const { analyzeSite } = require('./analyzer');
 const { sendEmail } = require('./emailSender');
 const { isPlaceContacted, isEmailContacted, recordContacted, logResult } = require('./tracker');
+
+const inboxesJsonPath = path.resolve(process.cwd(), 'config/inboxes.json');
+let inboxesCache = null;
+let currentInboxIdx = 0;
+
+function getSingleAccount() {
+  return {
+    email: config.emailUser || config.gmailUser,
+    appPassword: config.emailPass || config.gmailAppPassword,
+    fromName: config.fromName,
+    smtpHost: config.smtpHost,
+    smtpPort: config.smtpPort,
+    smtpSecure: config.smtpSecure,
+  };
+}
+
+function getNextRotatedInbox() {
+  try {
+    if (fs.existsSync(inboxesJsonPath)) {
+      inboxesCache = JSON.parse(fs.readFileSync(inboxesJsonPath, 'utf8'));
+    }
+  } catch (e) {}
+  if (inboxesCache && inboxesCache.length > 0) {
+    const inbox = inboxesCache[currentInboxIdx % inboxesCache.length];
+    currentInboxIdx++;
+    return inbox;
+  }
+  return getSingleAccount();
+}
 
 /**
  * Executes a full lead generation & outreach campaign with 3-layer search resiliency.
@@ -37,24 +68,52 @@ async function runCampaign(options = {}) {
     details: [],
   };
 
-  let places = [];
-  try {
-    if (config.searchProvider === 'google') {
-      places = await searchPlaces(niche, region, maxResults * 3);
-    } else {
-      // Layer 1: OpenStreetMap Overpass (with fast multi-mirror fallback)
-      places = await searchPlacesOSM(niche, region, maxResults * 3);
+  const STATE_CITY_CLUSTERS = {
+    'tennessee': ['Nashville, TN', 'Knoxville, TN', 'Chattanooga, TN', 'Memphis, TN'],
+    'tennessy': ['Nashville, TN', 'Knoxville, TN', 'Chattanooga, TN', 'Memphis, TN'],
+    'tn': ['Nashville, TN', 'Knoxville, TN', 'Chattanooga, TN', 'Memphis, TN'],
+    'texas': ['Austin, TX', 'Dallas, TX', 'Houston, TX', 'San Antonio, TX'],
+    'florida': ['Miami, FL', 'Orlando, FL', 'Tampa, FL', 'Jacksonville, FL'],
+    'california': ['Los Angeles, CA', 'San Francisco, CA', 'San Diego, CA'],
+  };
 
-      // Layer 2: Nominatim fallback if Overpass returned 0
-      if (!places || places.length === 0) {
-        await notify(`ℹ️ Primary map server busy, trying secondary map directory...`);
-        places = await searchNominatim(niche, region, maxResults * 3);
+  const cleanRegKey = (region || '').toLowerCase().replace(/[^a-z]/g, '');
+  const matchedClusterKey = Object.keys(STATE_CITY_CLUSTERS).find(k => cleanRegKey.includes(k));
+  const searchRegions = matchedClusterKey ? STATE_CITY_CLUSTERS[matchedClusterKey] : [region];
+
+  let places = [];
+  const seenPlaceIds = new Set();
+
+  try {
+    for (const targetReg of searchRegions) {
+      if (places.length >= maxResults * 3) break;
+
+      let regPlaces = [];
+      if (config.searchProvider === 'google') {
+        regPlaces = await searchPlaces(niche, targetReg, maxResults * 3);
+      } else {
+        // Layer 1: OpenStreetMap Overpass (with fast multi-mirror fallback)
+        regPlaces = await searchPlacesOSM(niche, targetReg, maxResults * 2);
+
+        // Layer 2: Nominatim fallback if Overpass returned 0
+        if (!regPlaces || regPlaces.length === 0) {
+          regPlaces = await searchNominatim(niche, targetReg, maxResults * 2);
+        }
+
+        // Layer 3: Web Search Fallback if both returned 0
+        if (!regPlaces || regPlaces.length === 0) {
+          regPlaces = await searchWebFallback(niche, targetReg, maxResults * 2);
+        }
       }
 
-      // Layer 3: Web Search Fallback if both returned 0
-      if (!places || places.length === 0) {
-        await notify(`ℹ️ Searching web for local ${niche} in ${region}...`);
-        places = await searchWebFallback(niche, region, maxResults * 3);
+      if (Array.isArray(regPlaces)) {
+        for (const p of regPlaces) {
+          const key = p.placeId || p.name;
+          if (!seenPlaceIds.has(key)) {
+            seenPlaceIds.add(key);
+            places.push(p);
+          }
+        }
       }
     }
   } catch (err) {
@@ -126,12 +185,20 @@ async function runCampaign(options = {}) {
         siteText: siteInfo.text,
       });
 
+      const chosenInbox = options.inbox || (options.rotateInboxes ? getNextRotatedInbox() : getSingleAccount());
+
       // Send Email
       const emailResult = await sendEmail({
         to: siteInfo.email,
         subject: analysis.subject,
         body: analysis.body,
         businessName: biz.name,
+        fromEmail: chosenInbox?.email,
+        fromName: chosenInbox?.fromName,
+        appPassword: chosenInbox?.appPassword,
+        smtpHost: chosenInbox?.smtpHost,
+        smtpPort: chosenInbox?.smtpPort,
+        smtpSecure: chosenInbox?.smtpSecure,
       });
 
       const finalStatus = isDryRun ? 'dry_run_preview' : (emailResult.success ? 'sent' : 'send_error');
@@ -156,6 +223,7 @@ async function runCampaign(options = {}) {
         website: biz.website || siteInfo.url,
         niche,
         region,
+        senderEmail: chosenInbox?.email || config.emailUser || config.gmailUser,
       });
 
       if (emailResult.success) {
@@ -165,7 +233,14 @@ async function runCampaign(options = {}) {
           email: siteInfo.email,
           subject: analysis.subject,
         });
-        await notify(`✅ Dispatched email to *${biz.name}* (\`${siteInfo.email}\`)`);
+        await notify(`✅ Dispatched email to *${biz.name}* (\`${siteInfo.email}\`)\n   ↳ *Sent from:* \`${chosenInbox?.email || config.emailUser || config.gmailUser}\``);
+
+        // Safe pacing delay between email dispatches
+        if (!isDryRun && stats.emailsSent < maxResults && config.emailDelayMs > 0) {
+          const delaySec = Math.round(config.emailDelayMs / 1000);
+          console.log(`   ⏳ Waiting ${delaySec}s before next send to protect domain reputation...`);
+          await new Promise((r) => setTimeout(r, config.emailDelayMs));
+        }
       } else {
         stats.errors++;
         await notify(`❌ Failed to send to *${biz.name}*: ${emailResult.error}`);

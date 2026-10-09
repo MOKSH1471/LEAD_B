@@ -57,108 +57,178 @@ function getAllReplies() {
   return [];
 }
 
+function getInboxesToMonitor(options = {}) {
+  if (options.inbox) {
+    return [options.inbox];
+  }
+  if (options.singleAccount) {
+    const user = config.emailUser || config.gmailUser;
+    const pass = config.emailPass || config.gmailAppPassword;
+    if (user && pass) {
+      return [{
+        email: user,
+        appPassword: pass,
+        imapHost: config.imapHost,
+        imapPort: config.imapPort,
+        imapSecure: config.imapSecure,
+      }];
+    }
+  }
+
+  const inboxesPath = path.resolve(process.cwd(), 'config/inboxes.json');
+  if (fs.existsSync(inboxesPath)) {
+    try {
+      const list = JSON.parse(fs.readFileSync(inboxesPath, 'utf8'));
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    } catch (e) {}
+  }
+  if ((config.emailUser || config.gmailUser) && (config.emailPass || config.gmailAppPassword)) {
+    return [{
+      email: config.emailUser || config.gmailUser,
+      appPassword: config.emailPass || config.gmailAppPassword,
+      imapHost: config.imapHost,
+      imapPort: config.imapPort,
+      imapSecure: config.imapSecure,
+    }];
+  }
+  return [];
+}
+
 /**
  * Starts the IMAP background polling worker for incoming prospect replies.
  * Uses fresh client connection per check cycle for maximum reliability.
  */
-function startReplyTracker(onNewReply) {
-  if (!config.gmailUser || !config.gmailAppPassword) {
-    console.log('ℹ️ Reply tracker not started: GMAIL_USER or GMAIL_APP_PASSWORD missing.');
-    return;
+function startReplyTracker(onNewReply, options = {}) {
+  const inboxes = getInboxesToMonitor(options);
+  if (inboxes.length === 0) {
+    console.log('ℹ️ Reply tracker not started: No valid email account found for IMAP.');
+    return { checkNow: async () => {}, stop: () => {} };
   }
 
   loadNotified();
+
+  const pollIntervalMs = options.pollIntervalMs || 30000; // Poll every 30 seconds by default during runs
 
   async function checkInbox() {
     const contactedEmails = getContactedMap();
     const emailKeys = Object.keys(contactedEmails);
     if (emailKeys.length === 0) return;
 
-    const client = new ImapFlow({
-      host: 'imap.gmail.com',
-      port: 993,
-      secure: true,
-      auth: {
-        user: config.gmailUser,
-        pass: config.gmailAppPassword,
-      },
-      logger: false,
-    });
+    const monitoredInboxes = getInboxesToMonitor(options);
+    for (const inbox of monitoredInboxes) {
+      if (!inbox.email || !inbox.appPassword) continue;
 
-    try {
-      await client.connect();
-      const lock = await client.getMailboxLock('INBOX');
+      const imapHost = inbox.imapHost || config.imapHost || 'imap.titan.email';
+      const imapPort = inbox.imapPort || config.imapPort || 993;
+      const imapSecure = inbox.imapSecure !== undefined ? inbox.imapSecure : config.imapSecure;
+
+      const client = new ImapFlow({
+        host: imapHost,
+        port: imapPort,
+        secure: imapSecure,
+        auth: {
+          user: inbox.email,
+          pass: inbox.appPassword,
+        },
+        logger: false,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
       try {
-        const messages = client.fetch({ seq: '1:*' }, { envelope: true, source: true });
+        await client.connect();
+        const lock = await client.getMailboxLock('INBOX');
 
-        for await (const msg of messages) {
-          const uid = String(msg.uid);
-          if (notifiedSet.has(uid)) continue;
-
-          const fromAddress = (msg.envelope.from && msg.envelope.from[0] ? msg.envelope.from[0].address : '').toLowerCase().trim();
-
-          if (fromAddress && (contactedEmails[fromAddress] || emailKeys.some(k => fromAddress.includes(k)))) {
-            const matchedKey = contactedEmails[fromAddress] ? fromAddress : emailKeys.find(k => fromAddress.includes(k));
-            const businessInfo = contactedEmails[matchedKey] || { name: 'Prospect' };
-
-            let bodyText = '';
-            try {
-              const parsed = await simpleParser(msg.source);
-              bodyText = parsed.text || parsed.html || '';
-            } catch (e) {
-              bodyText = msg.envelope.subject || '';
-            }
-
-            const cleanSnippet = bodyText.replace(/\s+/g, ' ').trim().slice(0, 300);
-
-            const replyData = {
-              uid,
-              businessName: businessInfo.name || 'Prospect',
-              fromEmail: fromAddress,
-              subject: msg.envelope.subject || 'No Subject',
-              snippet: cleanSnippet || '(Empty message)',
-              date: msg.envelope.date ? new Date(msg.envelope.date).toLocaleString() : new Date().toLocaleString(),
-            };
-
-            notifiedSet.add(uid);
-            saveNotified();
-            saveReply(replyData);
-
-            // Immediately mark lead as replied so all future follow-ups are halted!
-            try {
-              markLeadReplied(matchedKey || fromAddress, replyData);
-            } catch (trackerErr) {
-              console.warn('Could not update tracker for reply:', trackerErr.message);
-            }
-
-            console.log(`\n🚨 [LEAD REPLY] New reply from "${replyData.businessName}" (${replyData.fromEmail})!`);
-
-            if (typeof onNewReply === 'function') {
-              onNewReply(replyData);
-            }
-          } else {
-            notifiedSet.add(uid);
+        try {
+          const status = await client.status('INBOX', { messages: true });
+          const totalMessages = status.messages || 0;
+          if (totalMessages === 0) {
+            lock.release();
+            await client.logout();
+            continue;
           }
+
+          // Fetch only recent 50 messages to keep check fast
+          const startSeq = Math.max(1, totalMessages - 50);
+          const messages = client.fetch(`${startSeq}:*`, { envelope: true, source: true });
+
+          for await (const msg of messages) {
+            const rawUid = String(msg.uid);
+            const uid = `${inbox.email}_${rawUid}`;
+            if (notifiedSet.has(uid) || notifiedSet.has(rawUid)) continue;
+
+            const fromAddress = (msg.envelope.from && msg.envelope.from[0] ? msg.envelope.from[0].address : '').toLowerCase().trim();
+
+            if (fromAddress && (contactedEmails[fromAddress] || emailKeys.some(k => fromAddress.includes(k)))) {
+              const matchedKey = contactedEmails[fromAddress] ? fromAddress : emailKeys.find(k => fromAddress.includes(k));
+              const businessInfo = contactedEmails[matchedKey] || { name: 'Prospect' };
+
+              let bodyText = '';
+              try {
+                const parsed = await simpleParser(msg.source);
+                bodyText = parsed.text || parsed.html || '';
+              } catch (e) {
+                bodyText = msg.envelope.subject || '';
+              }
+
+              const cleanSnippet = bodyText.replace(/\s+/g, ' ').trim().slice(0, 300);
+
+              const replyData = {
+                uid,
+                businessName: businessInfo.name || 'Prospect',
+                fromEmail: fromAddress,
+                subject: msg.envelope.subject || 'No Subject',
+                snippet: cleanSnippet || '(Empty message)',
+                date: msg.envelope.date ? new Date(msg.envelope.date).toLocaleString() : new Date().toLocaleString(),
+              };
+
+              notifiedSet.add(uid);
+              saveNotified();
+              saveReply(replyData);
+
+              // Immediately mark lead as replied so all future follow-ups are halted!
+              try {
+                markLeadReplied(matchedKey || fromAddress, replyData);
+              } catch (trackerErr) {
+                console.warn('Could not update tracker for reply:', trackerErr.message);
+              }
+
+              console.log(`\n🚨 [LEAD REPLY] New reply from "${replyData.businessName}" (${replyData.fromEmail})!`);
+
+              if (typeof onNewReply === 'function') {
+                try {
+                  onNewReply(replyData);
+                } catch (e) {}
+              }
+            } else {
+              notifiedSet.add(uid);
+            }
+          }
+        } finally {
+          lock.release();
         }
-      } finally {
-        lock.release();
+        await client.logout();
+      } catch (err) {
+        // Normal transient error / disconnect ignore
       }
-      await client.logout();
-    } catch (err) {
-      // Ignore normal disconnects
     }
   }
 
-  // Initial check after 5 seconds
-  setTimeout(checkInbox, 5000);
+  // Initial check quickly after 2 seconds
+  const initialTimer = setTimeout(checkInbox, 2000);
 
-  // Poll inbox every 90 seconds
-  const intervalId = setInterval(checkInbox, 90000);
+  // Poll inbox regularly
+  const intervalId = setInterval(checkInbox, pollIntervalMs);
 
   return {
     checkNow: checkInbox,
-    stop: () => clearInterval(intervalId),
+    stop: () => {
+      clearTimeout(initialTimer);
+      clearInterval(intervalId);
+    },
   };
 }
 

@@ -6,6 +6,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
+    "single": "node src/index.js",
+    "check-replies": "node src/index.js --check-only",
+    "preview": "node src/index.js --dry-run",
     "telegram": "node src/telegramBot.js",
     "autopilot": "node src/autopilot.js",
     "followups": "node -e \"require('./src/followUpEngine').runFollowUpSweep()\"",
