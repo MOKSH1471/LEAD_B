@@ -53,7 +53,9 @@ const config = {
   emailPass,
   gmailUser: emailUser, // backward compatibility
   gmailAppPassword: emailPass, // backward compatibility
-  fromName: getEnv('FROM_NAME', 'Freelance Web Consultant'),
+  fromName: getEnv('FROM_NAME', 'Moksh Desai'),
+  agencyName: getEnv('AGENCY_NAME', 'Galileo & Duke'),
+  agencyWebsite: getEnv('AGENCY_WEBSITE', 'https://www.galileoandduke.com/'),
 
   smtpHost: resolvedSmtpHost,
   smtpPort: resolvedSmtpPort,

@@ -17,16 +17,19 @@ async function analyzeSite({ name, niche = config.niche, region = config.region,
     return getFallbackDraft({ name, niche, website });
   }
 
-  const senderName = config.fromName || 'Alex';
+  const senderName = config.fromName || 'Moksh Desai';
+  const agencyName = config.agencyName || 'Galileo & Duke';
+  const agencyWebsite = config.agencyWebsite || 'https://www.galileoandduke.com/';
 
   const prompt = `
-You are an expert cold outreach specialist and freelance web designer following the strict rules from "Marketing.md — Cold Outreach Playbook for Maximum Conversion".
+You are an expert cold outreach specialist and design lead at ${agencyName} (${agencyWebsite}) following the strict rules from "Marketing.md — Cold Outreach Playbook for Maximum Conversion".
 
 BUSINESS CONTEXT:
 - Business Name: ${name}
 - Niche: ${niche}
 - Region: ${region}
 - Website URL: ${website}
+- Our Studio Website: ${agencyWebsite}
 - Scraped Website Text:
 """
 ${siteText ? siteText.slice(0, 3000) : 'No readable text extracted.'}
@@ -42,12 +45,16 @@ STRICT PLAYBOOK RULES FROM MARKETING.MD:
    - Make it about THEM, not about your service.
 
 2. EMAIL BODY:
-   - Word Count: STRICTLY 75 to 120 words. (Short, clean, plain-text feeling).
+   - Word Count: STRICTLY 75 to 125 words. (Short, clean, plain-text feeling).
    - Step 1 (Opening): OPEN WITH THEM, NOT YOU. First line MUST reference looking at ${name}'s website while researching ${niche} in ${region}. NEVER start with "Hi, my name is..." or "I am a web developer".
    - Step 2 (Observation): Cite 1 or 2 hyper-specific, genuine observations found on their actual site (e.g. mobile navigation clarity, appointment booking visibility, speed, modern visual hierarchy).
    - Step 3 (Value Bridge): 1 sentence on the business impact (e.g. making it seamless for visitors to book appointments or call directly).
    - Step 4 (CTA — DEMO WEBSITE OFFER): The call-to-action MUST offer to build and share a custom, modern demo website tailored for their business to see if they like it. Low friction (e.g. "I'd be happy to put together a quick interactive demo website for ${name} if you'd be open to seeing how it looks? No strings attached."). NEVER ask for a phone call.
-   - Step 5 (Sign-off): Simple first-person freelancer sign-off from "${senderName}". No agency corporate block.
+   - Step 5 (Sign-off & Credibility): Professional, warm sign-off from "${senderName}" that explicitly mentions our website ${agencyWebsite}.
+     Example sign-off format:
+     Best,
+     ${senderName}
+     ${agencyName} | ${agencyWebsite}
 
 3. IMPROVEMENT POINTERS:
    - Provide 3-4 specific, concrete pointers based on their actual website text.

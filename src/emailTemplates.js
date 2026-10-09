@@ -11,7 +11,9 @@ const { config } = require('./config');
  * - Step 5: Freelancer sign-off
  */
 function getFallbackDraft({ name, niche, website }) {
-  const senderName = config.fromName || 'Alex';
+  const senderName = config.fromName || 'Moksh Desai';
+  const agencyName = config.agencyName || 'Galileo & Duke';
+  const agencyWebsite = config.agencyWebsite || 'https://www.galileoandduke.com/';
   const businessName = name || 'there';
   const displayNiche = (niche || 'local businesses').toLowerCase();
 
@@ -27,6 +29,7 @@ I'd be happy to put together a quick, modern demo website for ${businessName} so
 
 Best,
 ${senderName}
+${agencyName} | ${agencyWebsite}
 `;
 
   return {

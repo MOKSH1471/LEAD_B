@@ -23,7 +23,9 @@ function formatFollowUpSubject(originalSubject, businessName) {
  * Fallback follow-up drafts following the Cold Outreach Playbook
  */
 function getFallbackFollowUpDraft({ name, stage, originalSubject }) {
-  const senderName = config.fromName || 'Alex';
+  const senderName = config.fromName || 'Moksh Desai';
+  const agencyName = config.agencyName || 'Galileo & Duke';
+  const agencyWebsite = config.agencyWebsite || 'https://www.galileoandduke.com/';
   const businessName = name || 'there';
   const subject = formatFollowUpSubject(originalSubject, businessName);
 
@@ -37,7 +39,8 @@ I know you're busy running the business, but I'd still love to put together that
 Would you like me to send that over? No strings attached.
 
 Best,
-${senderName}`;
+${senderName}
+${agencyName} | ${agencyWebsite}`;
 
     return { subject, body: body.trim() };
   }
@@ -50,7 +53,8 @@ I'll keep this brief — I assume you're all set or have your hands full right n
 If you ever want to explore a refreshed, modern website or check out that custom demo for ${businessName} down the road, feel free to reach back out anytime.
 
 Wishing you and the team all the best,
-${senderName}`;
+${senderName}
+${agencyName} | ${agencyWebsite}`;
 
   return { subject, body: body.trim() };
 }
@@ -61,14 +65,16 @@ ${senderName}`;
 async function generateFollowUpDraft({ name, niche, region, website, pointers, stage, originalSubject }) {
   const businessName = name || 'there';
   const subject = formatFollowUpSubject(originalSubject, businessName);
-  const senderName = config.fromName || 'Alex';
+  const senderName = config.fromName || 'Moksh Desai';
+  const agencyName = config.agencyName || 'Galileo & Duke';
+  const agencyWebsite = config.agencyWebsite || 'https://www.galileoandduke.com/';
 
   if (!genAI) {
     return getFallbackFollowUpDraft({ name, stage, originalSubject });
   }
 
   const prompt = `
-You are an expert cold outreach specialist and freelance web designer following the Cold Outreach Playbook.
+You are an expert cold outreach specialist and design lead at ${agencyName} (${agencyWebsite}) following the Cold Outreach Playbook.
 Generate a high-converting, human, plain-text FOLLOW-UP email to a local business.
 
 CONTEXT:
@@ -76,6 +82,7 @@ CONTEXT:
 - Niche: ${niche || 'local business'}
 - Region: ${region || 'local area'}
 - Website: ${website || 'their site'}
+- Our Studio Website: ${agencyWebsite}
 - Previous Pointers Noticed: ${(pointers || []).join('; ') || 'Mobile layout, booking flow, modern visuals'}
 - Follow-Up Stage: ${stage} (1 = Gentle check-in after 3 days, 2 = Final polite breakup after 7 days)
 - Original Subject: ${originalSubject || `Quick note on ${businessName}'s website`}
@@ -86,14 +93,20 @@ RULES FOR STAGE 1 (Gentle Bump):
 - Acknowledge they are likely busy running operations.
 - Reference the previous note offering a custom demo website to see how it looks.
 - Low-friction question (e.g. "Would you be open to checking out a quick interactive demo?").
-- Freelancer sign-off from "${senderName}".
+- Sign-off:
+  Best,
+  ${senderName}
+  ${agencyName} | ${agencyWebsite}
 
 RULES FOR STAGE 2 (Final Breakup):
 - Word count: 35 to 55 words maximum.
 - Zero pressure, completely polite closing note.
 - State that you assume they are busy or all set, so you won't reach out again.
 - Leave the door open if they ever want a modern website or want to see the demo down the road.
-- Warm freelancer sign-off from "${senderName}".
+- Sign-off:
+  Best,
+  ${senderName}
+  ${agencyName} | ${agencyWebsite}
 
 OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown, no backticks):
