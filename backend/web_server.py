@@ -153,7 +153,8 @@ def run_campaign_worker(req: CampaignRequest):
             try:
                 intel = extract_agency_intelligence(website)
             except Exception as e:
-                continue
+                print(f"[!] Intelligence extraction error for {website}: {e}")
+                intel = {}
 
             email = intel.get("primary_email") or agency.get("email")
             ig_handle = intel.get("instagram_handle") or agency.get("instagram", "Not Listed")
@@ -161,7 +162,7 @@ def run_campaign_worker(req: CampaignRequest):
             li_url = intel.get("linkedin_url", "")
             founder_url = intel.get("founder_search_url", "")
             offers_web = intel.get("offers_web_dev", False)
-            specialties = intel.get("specialties", [])
+            specialties = intel.get("specialties") or ["Marketing & Brand Strategy"]
             is_curated = agency.get("is_curated", False)
 
             # Determine clean agency name

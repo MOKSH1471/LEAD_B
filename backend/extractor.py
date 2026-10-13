@@ -1,13 +1,25 @@
 import re
 import requests
+import urllib3
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
 import config
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
@@ -270,15 +282,7 @@ def extract_agency_intelligence(website_url):
     has_web_services = False
     web_reason = "No website services found"
     
-    pages_to_check = [
-        website_url,
-        urljoin(website_url, "/contact/"),
-        urljoin(website_url, "/contact-us/"),
-        urljoin(website_url, "/contact"),
-        urljoin(website_url, "/contact-us"),
-        urljoin(website_url, "/about/"),
-        urljoin(website_url, "/about-us/"),
-    ]
+    pages_to_check = [website_url]
 
     for url in pages_to_check:
         if url in visited_urls:
@@ -286,23 +290,16 @@ def extract_agency_intelligence(website_url):
         visited_urls.add(url)
         
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=3.5, allow_redirects=True)
+            try:
+                resp = requests.get(url, headers=HEADERS, timeout=(5.0, 8.0), allow_redirects=True)
+            except (requests.exceptions.SSLError, requests.exceptions.CertificateError):
+                resp = requests.get(url, headers=HEADERS, timeout=(5.0, 8.0), allow_redirects=True, verify=False)
             if resp.status_code != 200:
                 continue
                 
             content = resp.text
             all_page_text.append(content)
             soup = BeautifulSoup(content, "html.parser")
-
-            # On homepage, discover any custom on-site contact/team links
-            if url == website_url:
-                for a in soup.find_all("a", href=True):
-                    h_lower = a['href'].lower().strip()
-                    if any(k in h_lower for k in ["contact", "get-in-touch", "say-hello", "reach", "touch", "team"]):
-                        cand_url = urljoin(website_url, a['href'])
-                        cand_domain = urlparse(cand_url).netloc.replace("www.", "").lower()
-                        if cand_domain == agency_domain and cand_url not in pages_to_check and len(pages_to_check) < 10:
-                            pages_to_check.append(cand_url)
             
             # Extract site title / brand name if on primary homepage
             if not site_title:
@@ -357,14 +354,26 @@ def extract_agency_intelligence(website_url):
                 if is_valid_email(clean_email):
                     found_emails.append(clean_email)
 
-            # Fast break: if agency offers web dev (disqualified) or if valid email is found, stop querying further pages
+            # Fast break: if valid email is already found or offers web dev, stop querying further pages
             if has_web_services or found_emails:
                 break
 
+            # If on homepage and still no email, discover 1 specific contact page from actual navigation links
+            if url == website_url and not found_emails:
+                found_contact_link = False
+                for a in soup.find_all("a", href=True):
+                    h_lower = a['href'].lower().strip()
+                    if any(k in h_lower for k in ["contact", "say-hello", "get-in-touch", "touch", "reach"]):
+                        cand_url = urljoin(website_url, a['href'])
+                        cand_domain = urlparse(cand_url).netloc.replace("www.", "").lower()
+                        if cand_domain == agency_domain and cand_url not in pages_to_check:
+                            pages_to_check.append(cand_url)
+                            found_contact_link = True
+                            break
+                if not found_contact_link:
+                    pages_to_check.append(urljoin(website_url, "/contact/"))
+
         except Exception:
-            # If the primary homepage fails to connect, abort checking subpages
-            if len(visited_urls) <= 1:
-                break
             continue
 
     combined_text = " ".join(all_page_text)
