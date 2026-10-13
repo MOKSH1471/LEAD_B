@@ -63,7 +63,7 @@ Backend runs at `http://0.0.0.0:8000` (accessible from both localhost and local 
 
 - Install `GalileoDukeRadar.apk` directly on any Android device.
 - Open the app, tap the **⚙️ (Settings)** icon in the navigation dock.
-- Under **SERVER CONFIGURATION**, tap **SERVER 🌐** and set your backend IP (e.g. `http://192.168.1.50:8000` or a deployed cloud HTTPS domain).
+- Under **SERVER CONFIGURATION**, tap **SERVER 🌐** and set your backend server URL (e.g. `http://YOUR_SERVER_IP:8000` or a deployed cloud HTTPS domain like `https://your-backend.onrender.com`).
 - The app immediately connects to your live outreach radar, streams campaigns in real time, and allows one-tap PDF exports.
 
 ---

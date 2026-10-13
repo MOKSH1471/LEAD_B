@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.protocol.startsWith('http')) {
       return '';
     }
-    return 'http://192.168.29.106:8000';
+    return 'http://10.0.2.2:8000';
   }
 
   // DOM Elements
@@ -745,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (window.location.protocol.startsWith('http')) {
         settingBackendUrlDesc.textContent = `${window.location.origin} (Auto)`;
       } else {
-        settingBackendUrlDesc.textContent = 'http://192.168.29.106:8000 (Default)';
+        settingBackendUrlDesc.textContent = 'http://10.0.2.2:8000 (Default)';
       }
     }
   }
@@ -753,8 +753,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnConfigBackendUrl) {
     btnConfigBackendUrl.addEventListener('click', () => {
-      const current = localStorage.getItem('GND_BACKEND_URL') || (window.location.protocol.startsWith('http') ? window.location.origin : 'http://192.168.29.106:8000');
-      const entered = prompt('Enter your External Backend URL (e.g. https://your-server.onrender.com or http://192.168.29.106:8000):', current);
+      const current = localStorage.getItem('GND_BACKEND_URL') || (window.location.protocol.startsWith('http') ? window.location.origin : 'http://10.0.2.2:8000');
+      const entered = prompt('Enter your External Backend URL (e.g. https://your-server.onrender.com or http://192.168.1.X:8000):', current);
       if (entered !== null) {
         const clean = entered.trim().replace(/\/+$/, '');
         if (clean) {

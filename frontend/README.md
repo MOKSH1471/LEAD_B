@@ -9,7 +9,7 @@ Luxury Silver & Black theme mobile interface matching the official G&D logo.
 ## 🌐 Dynamic Backend Connection
 The app connects to your backend dynamically:
 * In the app, open **Settings ➔ SERVER 🌐** to point the app to any backend:
-  * Local: `http://192.168.29.106:8000`
+  * Local: `http://YOUR_LOCAL_IP:8000` (e.g. your computer's local Wi-Fi IP)
   * Hosted: `https://your-backend.onrender.com`
 
 ## 🛠️ Rebuilding the Android APK
