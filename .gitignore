@@ -46,7 +46,7 @@ captures/
 !frontend/GalileoDukeRadar.apk
 
 # Runtime lead data & generated reports
-leads_discovered.csv
+!backend/leads_discovered.csv
 leads_sent.csv
 leads_report_latest.pdf
 reports/*.pdf

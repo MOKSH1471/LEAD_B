@@ -726,10 +726,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. PDF Dossier Downloads
-  function triggerPdfDownload() {
+  // 9. PDF Dossier Downloads (Safe In-App Download)
+  async function triggerPdfDownload() {
     showToast('Preparing Executive PDF Dossier...');
-    window.location.href = `${getApiBase()}/api/download-pdf`;
+    try {
+      // 1. Generate/refresh PDF on server
+      const genResp = await fetch(`${getApiBase()}/api/generate-pdf`, { method: 'POST' });
+      if (!genResp.ok) {
+        const errData = await genResp.json().catch(() => ({}));
+        showToast(errData.detail || 'No leads in pipeline yet. Launch a campaign first!', true);
+        return;
+      }
+
+      // 2. Fetch the generated PDF as a Blob to download without leaving the app
+      showToast('Downloading PDF Dossier...');
+      const downloadUrl = `${getApiBase()}/api/download-pdf`;
+      const pdfResp = await fetch(downloadUrl);
+      if (!pdfResp.ok) {
+        showToast('PDF file not available yet. Please try again.', true);
+        return;
+      }
+
+      const blob = await pdfResp.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const tempLink = document.createElement('a');
+      tempLink.href = blobUrl;
+      tempLink.setAttribute('download', 'Galileo_Duke_Leads_Dossier.pdf');
+      tempLink.style.display = 'none';
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
+      showToast('PDF Dossier downloaded successfully!');
+    } catch (err) {
+      console.warn('PDF download error:', err);
+      // Fallback: Open in external browser without replacing current WebView
+      window.open(`${getApiBase()}/api/download-pdf`, '_system');
+    }
   }
 
   if (btnQuickPdf) btnQuickPdf.addEventListener('click', triggerPdfDownload);

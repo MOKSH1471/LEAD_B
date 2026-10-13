@@ -1,0 +1,18 @@
+{
+  "name": "Galileo & Duke Agency Radar",
+  "short_name": "Radar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090C10",
+  "theme_color": "#090C10",
+  "orientation": "portrait-primary",
+  "description": "B2B Agency Intelligence & Multi-Channel Outreach Engine",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23090C10'/><circle cx='50' cy='50' r='38' fill='%23C6F432'/><text x='50' y='58' font-size='28' font-weight='bold' font-family='sans-serif' text-anchor='middle' fill='%23090C10'>GD</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
