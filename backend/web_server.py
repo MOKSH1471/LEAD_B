@@ -155,21 +155,22 @@ def run_campaign_worker(req: CampaignRequest):
             except Exception as e:
                 continue
 
-            email = intel.get("primary_email")
-            ig_handle = intel.get("instagram_handle")
-            ig_url = intel.get("instagram_url")
+            email = intel.get("primary_email") or agency.get("email")
+            ig_handle = intel.get("instagram_handle") or agency.get("instagram", "Not Listed")
+            ig_url = intel.get("instagram_url") or ""
             li_url = intel.get("linkedin_url", "")
             founder_url = intel.get("founder_search_url", "")
             offers_web = intel.get("offers_web_dev", False)
             specialties = intel.get("specialties", [])
+            is_curated = agency.get("is_curated", False)
 
             # Determine clean agency name
             agency_name = raw_name
             if not agency_name or agency_name.lower() in [domain, "marketing studio"]:
                 agency_name = clean_agency_name(intel.get("site_title"), domain)
 
-            # Skip agencies that already do web development
-            if offers_web:
+            # Skip agencies that already do web development (curated agencies are pre-vetted marketing/PR studios)
+            if offers_web and not is_curated:
                 broadcast_event("lead_skipped", {
                     "name": agency_name,
                     "reason": f"Offers in-house web dev ({intel.get('web_reason', '')})"
@@ -177,7 +178,7 @@ def run_campaign_worker(req: CampaignRequest):
                 continue
 
             # Must be marketing focus
-            if not intel.get("is_marketing", False):
+            if not intel.get("is_marketing", False) and not is_curated:
                 broadcast_event("lead_skipped", {
                     "name": agency_name,
                     "reason": "Not a marketing/PR agency"
@@ -192,11 +193,15 @@ def run_campaign_worker(req: CampaignRequest):
                 continue
 
             if getattr(config, "IGNORE_INFO_EMAILS", True) and is_info_email(email):
-                broadcast_event("lead_skipped", {
-                    "name": agency_name,
-                    "reason": f"Filtered generic gatekeeper email ({email})"
-                })
-                continue
+                alt_email = next((e for e in intel.get("all_emails", []) if not is_info_email(e)), None)
+                if alt_email:
+                    email = alt_email
+                elif not is_curated:
+                    broadcast_event("lead_skipped", {
+                        "name": agency_name,
+                        "reason": f"Filtered generic gatekeeper email ({email})"
+                    })
+                    continue
 
             if email in already_contacted:
                 continue
@@ -295,6 +300,9 @@ def run_campaign_worker(req: CampaignRequest):
                     })
 
     except Exception as e:
+        print(f"[!] Campaign worker error: {e}")
+        import traceback
+        traceback.print_exc()
         broadcast_event("campaign_error", {"error": str(e)})
 
     # Generate PDF Dossier
@@ -307,7 +315,10 @@ def run_campaign_worker(req: CampaignRequest):
 
     with campaign_lock:
         campaign_state["is_running"] = False
-        campaign_state["status_message"] = f"Campaign finished: {sent_count} leads processed"
+        if sent_count > 0:
+            campaign_state["status_message"] = f"Campaign finished: {sent_count}/{req.target} leads processed"
+        else:
+            campaign_state["status_message"] = f"Finished: All available agencies in {clean_region} already contacted or skipped"
         campaign_state["latest_pdf_path"] = pdf_path
 
     broadcast_event("campaign_completed", {

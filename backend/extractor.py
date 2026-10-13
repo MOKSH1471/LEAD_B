@@ -54,6 +54,17 @@ def is_info_email(email):
     user = email.split("@")[0].lower().strip()
     return user in ["info", "information"] or bool(re.match(r"^info[._-]", user))
 
+def decode_cloudflare_email(cf_hex):
+    """Decodes Cloudflare XOR obfuscated email hex string."""
+    if not cf_hex or len(cf_hex) < 4:
+        return None
+    try:
+        key = int(cf_hex[:2], 16)
+        email = "".join([chr(int(cf_hex[i:i+2], 16) ^ key) for i in range(2, len(cf_hex), 2)])
+        return email.strip()
+    except Exception:
+        return None
+
 def is_valid_email(email):
     """Rigorous check for real email vs javascript library artifacts."""
     if not email or "@" not in email:
@@ -62,9 +73,9 @@ def is_valid_email(email):
     if len(parts) != 2:
         return False
     user, domain = parts[0], parts[1]
-    
-    # Ignore info@ emails to protect deliverability and avoid unmonitored gatekeeper inboxes
-    if getattr(config, "IGNORE_INFO_EMAILS", True) and is_info_email(email):
+
+    # Filter out npm/cdn package versions that look like emails (e.g. gsap@3.12.5, swiper@8.4.7)
+    if re.search(r'@[v]?\d+(\.\d+)+', email):
         return False
 
     if re.search(r'^\d+(\.\d+)*$', domain):
@@ -261,8 +272,12 @@ def extract_agency_intelligence(website_url):
     
     pages_to_check = [
         website_url,
+        urljoin(website_url, "/contact/"),
+        urljoin(website_url, "/contact-us/"),
         urljoin(website_url, "/contact"),
-        urljoin(website_url, "/about"),
+        urljoin(website_url, "/contact-us"),
+        urljoin(website_url, "/about/"),
+        urljoin(website_url, "/about-us/"),
     ]
 
     for url in pages_to_check:
@@ -278,6 +293,16 @@ def extract_agency_intelligence(website_url):
             content = resp.text
             all_page_text.append(content)
             soup = BeautifulSoup(content, "html.parser")
+
+            # On homepage, discover any custom on-site contact/team links
+            if url == website_url:
+                for a in soup.find_all("a", href=True):
+                    h_lower = a['href'].lower().strip()
+                    if any(k in h_lower for k in ["contact", "get-in-touch", "say-hello", "reach", "touch", "team"]):
+                        cand_url = urljoin(website_url, a['href'])
+                        cand_domain = urlparse(cand_url).netloc.replace("www.", "").lower()
+                        if cand_domain == agency_domain and cand_url not in pages_to_check and len(pages_to_check) < 10:
+                            pages_to_check.append(cand_url)
             
             # Extract site title / brand name if on primary homepage
             if not site_title:
@@ -307,13 +332,24 @@ def extract_agency_intelligence(website_url):
                 if li_link:
                     found_linkedin_url = li_link
 
-            # Extract mailto links
+            # Extract Cloudflare data-cfemail
+            for t in soup.find_all(attrs={"data-cfemail": True}):
+                cf_em = decode_cloudflare_email(t.get("data-cfemail", ""))
+                if cf_em and is_valid_email(cf_em):
+                    found_emails.append(cf_em)
+
+            # Extract mailto links & Cloudflare protection links
             for a in soup.find_all("a", href=True):
                 href = a['href'].strip()
                 if href.startswith("mailto:"):
                     clean_email = href.replace("mailto:", "").split("?")[0].strip()
                     if is_valid_email(clean_email):
                         found_emails.append(clean_email)
+                elif "/cdn-cgi/l/email-protection#" in href:
+                    cf_hex = href.split("#")[-1]
+                    cf_em = decode_cloudflare_email(cf_hex)
+                    if cf_em and is_valid_email(cf_em):
+                        found_emails.append(cf_em)
                         
             # Extract regex emails
             for match in EMAIL_REGEX.findall(content):

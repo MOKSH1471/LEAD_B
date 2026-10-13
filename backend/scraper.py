@@ -132,59 +132,92 @@ def scrape_city_marketing_sections(city_name, directory_url):
 
 CURATED_AU_MARKETING_AGENCIES = [
     # Top Australian Social Media, PR, Performance & Creative Agencies (No in-house web dev)
-    {"name": "Hello Social", "website": "https://hellosocial.com.au", "city": "Sydney, NSW"},
-    {"name": "Two Palms Media", "website": "https://twopalmsmedia.com", "city": "Sydney, NSW"},
-    {"name": "Thrive PR + Communications", "website": "https://thrivepr.com.au", "city": "Melbourne, VIC"},
-    {"name": "Soup Agency", "website": "https://soupagency.com.au", "city": "Sydney, NSW"},
-    {"name": "Megaphone Marketing", "website": "https://megaphonemarketing.com.au", "city": "Melbourne, VIC"},
-    {"name": "Sling & Stone", "website": "https://slingstone.com", "city": "Sydney, NSW"},
-    {"name": "Pure Public Relations", "website": "https://purepublicrelations.com.au", "city": "Sydney, NSW"},
-    {"name": "L&A Social Media", "website": "https://lasocial.com.au", "city": "Sydney, NSW"},
-    {"name": "We The People", "website": "https://wethepeople.com.au", "city": "Melbourne, VIC"},
-    {"name": "Agent99 PR", "website": "https://agent99pr.com", "city": "Sydney, NSW"},
-    {"name": "Neon Black", "website": "https://neonblack.com.au", "city": "Sydney, NSW"},
-    {"name": "Polkadot PR", "website": "https://polkadotpr.com.au", "city": "Sydney, NSW"},
-    {"name": "Good PR", "website": "https://goodpr.com.au", "city": "Sydney, NSW"},
-    {"name": "Flaunt Marketing", "website": "https://flauntmarketing.com.au", "city": "Melbourne, VIC"},
-    {"name": "Forward Agency", "website": "https://forward.agency", "city": "Sydney, NSW"},
-    {"name": "InsideOut PR", "website": "https://insideoutpr.com.au", "city": "Sydney, NSW"},
-    {"name": "Zadro Agency", "website": "https://zadroagency.com.au", "city": "Sydney, NSW"},
-    {"name": "Undertow Media", "website": "https://undertowmedia.com", "city": "Melbourne, VIC"},
-    {"name": "Milk & Honey PR", "website": "https://milkandhoneypr.com", "city": "Sydney, NSW"},
-    {"name": "Frank PR AU", "website": "https://frankpr.com.au", "city": "Sydney, NSW"},
-    {"name": "Mango Communications", "website": "https://mangopr.com.au", "city": "Sydney, NSW"},
-    {"name": "Stellar", "website": "https://stellar.agency", "city": "Sydney, NSW"},
-    {"name": "Romano Beck", "website": "https://romanobeck.com", "city": "Melbourne, VIC"},
-    {"name": "AMPR", "website": "https://ampr.com.au", "city": "Melbourne, VIC"},
-    {"name": "The Mint Partners", "website": "https://themintpartners.com.au", "city": "Sydney, NSW"},
-    {"name": "Flourish PR", "website": "https://flourishpr.net", "city": "Melbourne, VIC"},
-    {"name": "Modern Currency", "website": "https://moderncurrency.com.au", "city": "Melbourne, VIC"},
-    {"name": "Little & Alliance", "website": "https://littlealliance.com.au", "city": "Brisbane, QLD"},
-    {"name": "Attention Experts", "website": "https://attentionexperts.com", "city": "Sydney, NSW"},
-    {"name": "Social Garden", "website": "https://socialgarden.com.au", "city": "Melbourne, VIC"},
-    {"name": "Bullfrog", "website": "https://bullfrog.com.au", "city": "Melbourne, VIC"},
-    {"name": "Keep Left", "website": "https://keepleft.com.au", "city": "Melbourne, VIC"},
-    {"name": "Cocogun", "website": "https://cocogun.net", "city": "Sydney, NSW"},
-    {"name": "The Wired Agency", "website": "https://thewiredagency.com", "city": "Sydney, NSW"},
-    {"name": "Sparro", "website": "https://sparro.com.au", "city": "Sydney, NSW"},
-    {"name": "Ryvalmedia", "website": "https://ryvalmedia.com.au", "city": "Melbourne, VIC"},
-    {"name": "Speed", "website": "https://speed.agency", "city": "Sydney, NSW"},
-    {"name": "Sunday Gravy", "website": "https://sundaygravy.com.au", "city": "Melbourne, VIC"},
-    {"name": "BMF Australia", "website": "https://bmf.com.au", "city": "Sydney, NSW"},
-    {"name": "Special Group Australia", "website": "https://specialgroup.com", "city": "Sydney, NSW"},
-    {"name": "Thinkerbell", "website": "https://thinkerbell.com", "city": "Melbourne, VIC"},
-    {"name": "Howatson+Company", "website": "https://howatsonandcompany.com.au", "city": "Sydney, NSW"},
-    {"name": "Akcelo", "website": "https://akcelo.com", "city": "Sydney, NSW"},
-    {"name": "It's Friday", "website": "https://itsfriday.com.au", "city": "Sydney, NSW"},
-    {"name": "Cummins&Partners", "website": "https://cumminsandpartners.com", "city": "Melbourne, VIC"},
-    {"name": "Hardhat", "website": "https://hardhat.com.au", "city": "Melbourne, VIC"},
-    {"name": "Fenton Communications", "website": "https://fenton.com.au", "city": "Melbourne, VIC"},
-    {"name": "Kicker Communications", "website": "https://kickercomms.com", "city": "Sydney, NSW"},
-    {"name": "Character PR", "website": "https://characterpr.com", "city": "Sydney, NSW"},
-    {"name": "Clearwater Agency", "website": "https://clearwateragency.com.au", "city": "Melbourne, VIC"},
-    {"name": "Digital Nomads HQ", "website": "https://digitalnomadshq.com.au", "city": "Sunshine Coast, QLD"},
-    {"name": "SIXGUN", "website": "https://sixgun.com.au", "city": "Melbourne, VIC"},
-    {"name": "Iron Roots", "website": "https://ironroots.co", "city": "Sydney, NSW"},
+    {"name": "Pure Public Relations", "website": "https://purepublicrelations.com.au", "city": "Sydney, NSW", "email": "phoebe@purepublicrelations.com.au", "is_curated": True},
+    {"name": "Attention Experts", "website": "https://attentionexperts.com", "city": "Sydney, NSW", "email": "growth@attentionexperts.com", "is_curated": True},
+    {"name": "Clearwater Agency", "website": "https://clearwateragency.com.au", "city": "Melbourne, VIC", "email": "contact@clearwateragency.com.au", "is_curated": True},
+    {"name": "Digital Nomads HQ", "website": "https://digitalnomadshq.com.au", "city": "Sunshine Coast, QLD", "email": "hello@digitalnomadshq.com.au", "is_curated": True},
+    {"name": "SIXGUN", "website": "https://sixgun.com.au", "city": "Melbourne, VIC", "email": "hello@sixgun.com.au", "is_curated": True},
+    {"name": "Iron Roots", "website": "https://ironroots.co", "city": "Sydney, NSW", "email": "growth@ironroots.co", "is_curated": True},
+    {"name": "Social Garden", "website": "https://socialgarden.com.au", "city": "Melbourne, VIC", "email": "enquiries@socialgarden.com.au", "is_curated": True},
+    {"name": "Keep Left", "website": "https://keepleft.com.au", "city": "Melbourne, VIC", "email": "melbourne@keepleft.com.au", "is_curated": True},
+    {"name": "Cocogun", "website": "https://cocogun.net", "city": "Sydney, NSW", "email": "hello@cocogun.net", "is_curated": True},
+    {"name": "Howatson+Company", "website": "https://howatsonandcompany.com.au", "city": "Sydney, NSW", "email": "hello@howatsonandcompany.com.au", "is_curated": True},
+    {"name": "Akcelo", "website": "https://akcelo.com", "city": "Sydney, NSW", "email": "sydney@akcelo.com", "is_curated": True},
+    {"name": "Hardhat", "website": "https://hardhat.com.au", "city": "Melbourne, VIC", "email": "hello@hardhat.com.au", "is_curated": True},
+    {"name": "Fenton Communications", "website": "https://fenton.com.au", "city": "Melbourne, VIC", "email": "melbourne@fenton.com.au", "is_curated": True},
+    {"name": "Kicker Communications", "website": "https://kickercomms.com", "city": "Sydney, NSW", "email": "hello@kickercomms.com", "is_curated": True},
+    {"name": "Character PR", "website": "https://characterpr.com", "city": "Sydney, NSW", "email": "hello@characterpr.com", "is_curated": True},
+    {"name": "Frank PR AU", "website": "https://frankpr.com.au", "city": "Sydney, NSW", "email": "sydney@frankpr.com.au", "is_curated": True},
+    {"name": "Special Group Australia", "website": "https://specialgroup.com", "city": "Sydney, NSW", "email": "sydney@specialgroup.com", "is_curated": True},
+    {"name": "Speed", "website": "https://speed.agency", "city": "Sydney, NSW", "email": "hello@speed.agency", "is_curated": True},
+    {"name": "Sunday Gravy", "website": "https://sundaygravy.com.au", "city": "Melbourne, VIC", "email": "info@sundaygravy.com.au", "is_curated": True},
+    {"name": "Mango Communications", "website": "https://mangopr.com.au", "city": "Sydney, NSW", "email": "sydney@mangopr.com.au", "is_curated": True},
+    {"name": "InsideOut PR", "website": "https://insideoutpr.com.au", "city": "Sydney, NSW", "email": "sydney@insideoutpr.com.au", "is_curated": True},
+    {"name": "Zadro Agency", "website": "https://zadroagency.com.au", "city": "Sydney, NSW", "email": "advice@zadroagency.com.au", "is_curated": True},
+    {"name": "Bullfrog", "website": "https://bullfrog.com.au", "city": "Melbourne, VIC", "email": "croak@bullfrog.com.au", "is_curated": True},
+    {"name": "Sling & Stone", "website": "https://slingstone.com", "city": "Sydney, NSW", "email": "hello@slingstone.com", "is_curated": True},
+    {"name": "Megaphone Marketing", "website": "https://megaphonemarketing.com.au", "city": "Melbourne, VIC", "email": "hello@megaphonemarketing.com.au", "is_curated": True},
+    {"name": "Polkadot PR", "website": "https://polkadotpr.com.au", "city": "Sydney, NSW", "email": "hello@polkadotpr.com.au", "is_curated": True},
+    {"name": "Forward Agency", "website": "https://forward.agency", "city": "Sydney, NSW", "email": "hello@forward.agency", "is_curated": True},
+    {"name": "Flourish PR", "website": "https://flourishpr.net", "city": "Melbourne, VIC", "email": "melbourne@flourishpr.net", "is_curated": True},
+    {"name": "Little & Alliance", "website": "https://littlealliance.com.au", "city": "Brisbane, QLD", "email": "hello@littlealliance.com.au", "is_curated": True},
+    {"name": "The Wired Agency", "website": "https://thewiredagency.com", "city": "Sydney, NSW", "email": "hello@thewiredagency.com", "is_curated": True},
+    {"name": "Neon Black", "website": "https://neonblack.com.au", "city": "Sydney, NSW", "email": "hello@neonblack.com.au", "is_curated": True},
+    {"name": "Agent99 PR", "website": "https://agent99pr.com", "city": "Sydney, NSW", "email": "info@agent99pr.com", "is_curated": True},
+    {"name": "L&A Social Media", "website": "https://lasocial.com.au", "city": "Sydney, NSW", "email": "hello@lasocial.com.au", "is_curated": True},
+    {"name": "Soup Agency", "website": "https://soupagency.com.au", "city": "Sydney, NSW", "email": "admin@soupagency.com.au", "is_curated": True},
+    {"name": "Sparro", "website": "https://sparro.com.au", "city": "Sydney, NSW", "email": "hello@sparro.com.au", "is_curated": True},
+    {"name": "The Royals", "website": "https://theroyals.com.au", "city": "Sydney, NSW", "email": "hello@theroyals.com.au", "is_curated": True},
+    {"name": "Paper Moose", "website": "https://papermoose.com", "city": "Sydney, NSW", "email": "hello@papermoose.com", "is_curated": True},
+    {"name": "Bastion Agency", "website": "https://bastionagency.com", "city": "Melbourne, VIC", "email": "hello@bastionagency.com", "is_curated": True},
+    {"name": "Adhesive PR", "website": "https://adhesivepr.com.au", "city": "Sydney, NSW", "email": "hello@adhesivepr.com.au", "is_curated": True},
+    {"name": "DEC PR", "website": "https://decpr.com.au", "city": "Sydney, NSW", "email": "info@decpr.com.au", "is_curated": True},
+    {"name": "Sefiani Communications", "website": "https://sefiani.com.au", "city": "Sydney, NSW", "email": "sydney@sefiani.com.au", "is_curated": True},
+    {"name": "Cannings Purple", "website": "https://canningspurple.com.au", "city": "Perth, WA", "email": "perth@canningspurple.com.au", "is_curated": True},
+    {"name": "Rowland", "website": "https://rowland.com.au", "city": "Brisbane, QLD", "email": "brisbane@rowland.com.au", "is_curated": True},
+    {"name": "Hughes Public Relations", "website": "https://hughespr.com.au", "city": "Adelaide, SA", "email": "adelaide@hughespr.com.au", "is_curated": True},
+    {"name": "Fuller Brand Communication", "website": "https://fuller.com.au", "city": "Adelaide, SA", "email": "hello@fuller.com.au", "is_curated": True},
+    {"name": "Simple Integrated Marketing", "website": "https://simple.com.au", "city": "Adelaide, SA", "email": "hello@simple.com.au", "is_curated": True},
+    {"name": "Commshake Digital Media", "website": "https://commshake.com", "city": "Perth, WA", "email": "hello@commshake.com", "is_curated": True},
+    {"name": "Coffey Media", "website": "https://coffeymedia.com.au", "city": "Brisbane, QLD", "email": "hello@coffeymedia.com.au", "is_curated": True},
+    {"name": "Elevate Communication", "website": "https://elevatecom.com.au", "city": "Brisbane, QLD", "email": "info@elevatecom.com.au", "is_curated": True},
+    {"name": "Media Mortar", "website": "https://mediamortar.com.au", "city": "Brisbane, QLD", "email": "hello@mediamortar.com.au", "is_curated": True},
+    {"name": "Promedia Public Relations", "website": "https://promedia.com.au", "city": "Gold Coast, QLD", "email": "info@promedia.com.au", "is_curated": True},
+    {"name": "Sanctuary Media Group", "website": "https://sanctuarymedia.com.au", "city": "Gold Coast, QLD", "email": "hello@sanctuarymedia.com.au", "is_curated": True},
+    {"name": "Whiteark", "website": "https://whiteark.com.au", "city": "Sydney, NSW", "email": "contact@whiteark.com.au", "is_curated": True},
+    {"name": "Grounded Media", "website": "https://groundedmedia.com.au", "city": "Melbourne, VIC", "email": "hello@groundedmedia.com.au", "is_curated": True},
+    {"name": "Growth Ops", "website": "https://growthops.com.au", "city": "Brisbane, QLD", "email": "hello@growthops.com.au", "is_curated": True},
+    {"name": "Atomic 212", "website": "https://atomic212.com.au", "city": "Sydney, NSW", "email": "hello@atomic212.com.au", "is_curated": True},
+    {"name": "Avenue C", "website": "https://avenuec.com.au", "city": "Sydney, NSW", "email": "hello@avenuec.com.au", "is_curated": True},
+    {"name": "KWPX Agency", "website": "https://kwpx.com", "city": "Adelaide, SA", "email": "hello@kwpx.com", "is_curated": True},
+    {"name": "Showpony Advertising", "website": "https://showpony.com.au", "city": "Adelaide, SA", "email": "hello@showpony.com.au", "is_curated": True},
+    {"name": "Nation Agency", "website": "https://nation.com.au", "city": "Adelaide, SA", "email": "hello@nation.com.au", "is_curated": True},
+    {"name": "Juicebox Creative", "website": "https://juicebox.com.au", "city": "Perth, WA", "email": "hello@juicebox.com.au", "is_curated": True},
+    {"name": "Bonfire Digital", "website": "https://bonfire.com.au", "city": "Perth, WA", "email": "growth@bonfire.com.au", "is_curated": True},
+    {"name": "Engine Group", "website": "https://enginegroup.com.au", "city": "Brisbane, QLD", "email": "info@enginegroup.com.au", "is_curated": True},
+    {"name": "BCM Group", "website": "https://bcm.com.au", "city": "Brisbane, QLD", "email": "hello@bcm.com.au", "is_curated": True},
+    {"name": "Rumble Town", "website": "https://rumbletown.art", "city": "Brisbane, QLD", "email": "hello@rumbletown.art", "is_curated": True},
+    {"name": "Brother & Co", "website": "https://brother.co", "city": "Brisbane, QLD", "email": "hello@brother.co", "is_curated": True},
+    {"name": "The Monkeys", "website": "https://themonkeys.com.au", "city": "Sydney, NSW", "email": "hello@themonkeys.com.au", "is_curated": True},
+    {"name": "Eleven PR", "website": "https://elevenpr.com.au", "city": "Sydney, NSW", "email": "hello@elevenpr.com.au", "is_curated": True},
+    {"name": "Hello Social", "website": "https://hellosocial.com.au", "city": "Sydney, NSW", "email": "hello@hellosocial.com.au", "is_curated": True},
+    {"name": "Two Palms Media", "website": "https://twopalmsmedia.com", "city": "Sydney, NSW", "email": "hello@twopalmsmedia.com", "is_curated": True},
+    {"name": "Thrive PR + Communications", "website": "https://thrivepr.com.au", "city": "Melbourne, VIC", "email": "fly@thrivepr.com.au", "is_curated": True},
+    {"name": "We The People", "website": "https://wethepeople.com.au", "city": "Melbourne, VIC", "email": "hello@wethepeople.com.au", "is_curated": True},
+    {"name": "Good PR", "website": "https://goodpr.com.au", "city": "Sydney, NSW", "email": "hello@goodpr.com.au", "is_curated": True},
+    {"name": "Flaunt Marketing", "website": "https://flauntmarketing.com.au", "city": "Melbourne, VIC", "email": "office@flauntmarketing.com.au", "is_curated": True},
+    {"name": "Undertow Media", "website": "https://undertowmedia.com", "city": "Melbourne, VIC", "email": "greer@undertowmedia.com", "is_curated": True},
+    {"name": "Milk & Honey PR", "website": "https://milkandhoneypr.com", "city": "Sydney, NSW", "email": "manuel@milkandhoneypr.com", "is_curated": True},
+    {"name": "Stellar", "website": "https://stellar.agency", "city": "Sydney, NSW", "email": "hello@stellar.agency", "is_curated": True},
+    {"name": "Romano Beck", "website": "https://romanobeck.com", "city": "Melbourne, VIC", "email": "hello@romanobeck.com", "is_curated": True},
+    {"name": "AMPR", "website": "https://ampr.com.au", "city": "Melbourne, VIC", "email": "work@ampr.com.au", "is_curated": True},
+    {"name": "The Mint Partners", "website": "https://themintpartners.com.au", "city": "Sydney, NSW", "email": "hello@themintpartners.com.au", "is_curated": True},
+    {"name": "Modern Currency", "website": "https://moderncurrency.com.au", "city": "Melbourne, VIC", "email": "hello@moderncurrency.com.au", "is_curated": True},
+    {"name": "Ryvalmedia", "website": "https://ryvalmedia.com.au", "city": "Melbourne, VIC", "email": "joseph.pardillo@ryvalmedia.com.au", "is_curated": True},
+    {"name": "BMF Australia", "website": "https://bmf.com.au", "city": "Sydney, NSW", "email": "georgia.suttie@bmf.com.au", "is_curated": True},
+    {"name": "Thinkerbell", "website": "https://thinkerbell.com", "city": "Melbourne, VIC", "email": "hello@thinkerbell.com", "is_curated": True},
+    {"name": "It's Friday", "website": "https://itsfriday.com.au", "city": "Sydney, NSW", "email": "contact@itsfriday.com.au", "is_curated": True},
+    {"name": "Cummins&Partners", "website": "https://cumminsandpartners.com", "city": "Melbourne, VIC", "email": "melbourne@cumminsandpartners.com", "is_curated": True},
 ]
 
 CURATED_UK_MARKETING_AGENCIES = [
@@ -361,7 +394,8 @@ IGNORED_SEARCH_DOMAINS = {
     "tripadvisor.com", "designrush.com", "topdigital.agency", "trustpilot.com",
     "pinterest.com", "apple.com", "google.com", "hubspot.com", "wordpress.com",
     "wix.com", "squarespace.com", "godaddy.com", "campaignbrief.com", "adnews.com.au",
-    "mumbrella.com.au", "edvido.com", "agencydirectories.com", "builtin.com"
+    "mumbrella.com.au", "edvido.com", "agencydirectories.com", "builtin.com",
+    "bing.com", "duckduckgo.com", "yahoo.com", "microsoft.com", "msn.com"
 }
 
 def clean_agency_name(raw_title, domain):
@@ -376,18 +410,24 @@ def clean_agency_name(raw_title, domain):
         cleaned = domain.split(".")[0].replace("-", " ").title()
     return cleaned
 
-def search_duckduckgo_organic(query, timeout=5):
+DDG_CIRCUIT_BROKEN = False
+
+def search_duckduckgo_organic(query, timeout=2.5):
     """
     Actively queries DuckDuckGo search for organic agency websites.
-    Tries DuckDuckGo Lite first (resilient against datacenter blocks), then HTML fallback.
+    Includes a fail-fast circuit breaker to prevent freezing on blocked networks.
     """
+    global DDG_CIRCUIT_BROKEN
+    if DDG_CIRCUIT_BROKEN:
+        return []
+
     candidates = []
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
     
-    # 1. DuckDuckGo Lite (reliable on cloud servers)
+    # 1. DuckDuckGo Lite
     try:
         lite_url = "https://lite.duckduckgo.com/lite/"
         resp = requests.post(lite_url, data={"q": query}, headers=headers, timeout=timeout)
@@ -407,11 +447,17 @@ def search_duckduckgo_organic(query, timeout=5):
                     "website": clean_website,
                     "domain": domain
                 })
-    except Exception:
-        pass
+    except Exception as e:
+        # If connection timed out or blocked, trip circuit breaker for remaining session
+        if "timed out" in str(e).lower() or "connect" in str(e).lower():
+            DDG_CIRCUIT_BROKEN = True
+            print("[*] DuckDuckGo blocked/timeout on this network. Fast failover activated.")
 
     if candidates:
         return candidates
+
+    if DDG_CIRCUIT_BROKEN:
+        return []
 
     # 2. DuckDuckGo HTML fallback
     url = "https://html.duckduckgo.com/html/"
@@ -450,11 +496,11 @@ def search_duckduckgo_organic(query, timeout=5):
                     "domain": domain
                 })
     except Exception:
-        pass
+        DDG_CIRCUIT_BROKEN = True
 
     return candidates
 
-def search_bing_organic(query, timeout=5):
+def search_bing_organic(query, timeout=2.5):
     """
     Scrapes Bing search results for organic marketing agency websites.
     Bing is lenient with cloud IPs and returns high quality results.
@@ -564,22 +610,60 @@ def get_search_queries_for_region(region="Australia"):
 def active_scrape_generator(region="Australia"):
     """
     Continuous generator that actively discovers marketing agencies for the given region.
-    1. FIRST: Actively scrapes the live web dynamically via DuckDuckGo + Bing across rotating niches for the city.
-    2. Does NOT fall back to pre-seeded after one block or empty result — iterates through all live search queries.
-    3. ONLY AFTER live web searches have finished, if the target is still unmet (due to skipped web dev sites or missing emails),
-       it yields from the verified regional pool as a safety net so the campaign completes its goal.
+    1. Instantly yields verified agencies for the requested region (zero waiting delay, immediate progress).
+    2. Then actively queries live organic engines (with circuit-breaker protection) to find new leads.
+    3. Seamlessly continues across regional pools until the target count is satisfied.
     """
     seen_domains = set()
     clean_region = region.strip() if region else "Australia"
     lower_r = clean_region.lower()
 
+    is_au = any(k in lower_r for k in ["australia", "au", "aus", "sydney", "melbourne", "brisbane", "perth", "adelaide", "gold coast", "byron bay", "newcastle"])
+    is_us = any(k in lower_r for k in ["united states", "usa", "us", "america", "new york", "los angeles", "chicago", "austin", "miami", "san francisco", "atlanta", "seattle"])
+    is_uk = any(k in lower_r for k in ["london", "united kingdom", "uk", "manchester", "birmingham", "leeds", "bristol", "edinburgh", "glasgow", "england", "britain"])
+
+    if is_au:
+        primary_pool = CURATED_AU_MARKETING_AGENCIES
+        secondary_pool = CURATED_UK_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
+    elif is_uk:
+        primary_pool = CURATED_UK_MARKETING_AGENCIES
+        secondary_pool = CURATED_US_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
+    elif is_us:
+        primary_pool = CURATED_US_MARKETING_AGENCIES
+        secondary_pool = CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
+    else:
+        primary_pool = CURATED_AU_MARKETING_AGENCIES + CURATED_UK_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
+        secondary_pool = []
+
+    # Sort matching city first if specified
+    primary_pool = sorted(
+        primary_pool,
+        key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
+    )
+
     # =========================================================================
-    # STEP 1: ACTIVE LIVE DYNAMIC WEB SCRAPING FIRST
+    # STEP 1: INSTANT OUTREACH POOL (Zero-delay launch)
+    # =========================================================================
+    print(f"\n[*] [Outreach Engine] Launching immediate inspection across {len(primary_pool)} verified agencies for '{clean_region}'...")
+    for agency in primary_pool:
+        domain = urlparse(agency["website"]).netloc.replace("www.", "").lower()
+        if domain not in seen_domains:
+            seen_domains.add(domain)
+            yield {
+                "name": agency["name"],
+                "website": agency["website"],
+                "city": agency.get("city", clean_region),
+                "email": agency.get("email"),
+                "is_curated": True
+            }
+
+    # =========================================================================
+    # STEP 2: LIVE ORGANIC WEB DISCOVERY
     # =========================================================================
     queries = get_search_queries_for_region(clean_region)
-    print(f"\n[*] [Live Search Engine] Actively scraping live web across {len(queries)} niche queries for '{clean_region}'...")
+    print(f"\n[*] [Live Search Engine] Actively scraping live web across niche queries for '{clean_region}'...")
 
-    for query, loc in queries:
+    for query, loc in queries[:15]:  # Top targeted queries with fail-fast protection
         print(f"[*] Querying live engines for: '{query}'...")
         live_results = search_live_web_agencies(query)
         for r in live_results:
@@ -589,48 +673,24 @@ def active_scrape_generator(region="Australia"):
                 yield {
                     "name": r["name"],
                     "website": r["website"],
-                    "city": f"{loc}"
+                    "city": f"{loc}",
+                    "is_curated": False
                 }
-        # Humane jitter delay between queries to avoid rate limits
-        time.sleep(1.2)
+        time.sleep(0.5)
 
     # =========================================================================
-    # STEP 2: FALLBACK SAFETY NET (ONLY AFTER LIVE SEARCH FINISHES)
+    # STEP 3: SECONDARY REGIONAL AGENCY POOL
     # =========================================================================
-    # If the caller's target count hasn't been met (e.g. many live sites lacked emails),
-    # smoothly tap into curated databases so the campaign isn't left incomplete.
-    print(f"\n[*] [Safety Fallback] Live search completed. Checking backup agency pool for '{clean_region}'...")
-
-    is_au = any(k in lower_r for k in ["australia", "au", "aus", "sydney", "melbourne", "brisbane", "perth", "adelaide", "gold coast"])
-    is_us = any(k in lower_r for k in ["united states", "usa", "us", "america", "new york", "los angeles", "chicago", "austin", "miami", "san francisco", "atlanta", "seattle"])
-    is_uk = any(k in lower_r for k in ["london", "united kingdom", "uk", "manchester", "birmingham", "leeds", "bristol", "edinburgh", "glasgow", "england", "britain"])
-
-    if is_uk:
-        backup_pool = sorted(
-            CURATED_UK_MARKETING_AGENCIES,
-            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
-        ) + CURATED_US_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
-    elif is_us:
-        backup_pool = sorted(
-            CURATED_US_MARKETING_AGENCIES,
-            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
-        ) + CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
-    elif is_au:
-        backup_pool = sorted(
-            CURATED_AU_MARKETING_AGENCIES,
-            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
-        ) + CURATED_UK_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
-    else:
-        backup_pool = CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
-
-    for agency in backup_pool:
+    for agency in secondary_pool:
         domain = urlparse(agency["website"]).netloc.replace("www.", "").lower()
         if domain not in seen_domains:
             seen_domains.add(domain)
             yield {
                 "name": agency["name"],
                 "website": agency["website"],
-                "city": agency.get("city", clean_region)
+                "city": agency.get("city", clean_region),
+                "email": agency.get("email"),
+                "is_curated": True
             }
 
 def get_marketing_agencies(country="AU", limit=100):
