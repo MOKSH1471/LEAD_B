@@ -50,4 +50,6 @@ captures/
 leads_sent.csv
 leads_report_latest.pdf
 reports/*.pdf
+backend/reports/
 !reports/.gitkeep
+frontend/www/

@@ -89,8 +89,59 @@ def is_valid_email(email):
         
     return True
 
+ROLE_EMAIL_PREFIXES = {
+    "info", "information", "hello", "hi", "contact", "support", "help", "team", 
+    "general", "office", "admin", "enquiries", "inquiries", "inquiry", "enquiry",
+    "careers", "career", "jobs", "job", "work", "recruitment", "hiring",
+    "billing", "accounts", "invoice", "finance", "legal", "privacy", "security",
+    "press", "media", "pr", "marketing", "sales", "newbiz", "growth", "partnerships",
+    "letschat", "collaborate", "mail", "post", "feedback", "newsletter", "frontdesk"
+}
+
+def extract_person_name_from_email(email):
+    """
+    Extracts a clean human first name if the email belongs to an individual team member.
+    e.g. rachel@clarity.global -> 'Rachel'
+         john.doe@agency.com -> 'John'
+         sarah_connor@agency.com -> 'Sarah'
+    Returns None if it is a generic/role inbox.
+    """
+    if not email or "@" not in email:
+        return None
+    user = email.split("@")[0].lower().strip()
+    
+    # Check if generic role inbox
+    if user in ROLE_EMAIL_PREFIXES or any(user.startswith(r + ".") or user.startswith(r + "_") for r in ROLE_EMAIL_PREFIXES):
+        return None
+
+    # Handle firstname.lastname or firstname_lastname
+    if "." in user:
+        candidate = user.split(".")[0]
+    elif "_" in user:
+        candidate = user.split("_")[0]
+    elif "-" in user:
+        candidate = user.split("-")[0]
+    else:
+        candidate = user
+
+    # Strip numbers
+    candidate = re.sub(r'\d+', '', candidate).strip()
+    
+    # Must look like a real name (between 2 and 15 letters, purely alphabetic)
+    if candidate and candidate.isalpha() and 2 <= len(candidate) <= 15 and candidate not in ROLE_EMAIL_PREFIXES:
+        return candidate.capitalize()
+
+    return None
+
+def is_personal_member_email(email):
+    """Returns True if the email belongs to an individual team member rather than a shared inbox."""
+    return extract_person_name_from_email(email) is not None
+
 def prioritize_emails(email_list, agency_domain):
-    """Sort emails so direct business/newbiz emails appear first."""
+    """
+    Prioritizes individual member/personal emails (#1 priority: name@company.com),
+    followed by direct business/newbiz emails, followed by generic inboxes.
+    """
     if not email_list:
         return []
         
@@ -101,14 +152,20 @@ def prioritize_emails(email_list, agency_domain):
         domain = e.split("@")[1].lower()
         
         domain_match = 10 if agency_domain and agency_domain in domain else 0
+        
+        # #1 TOP PRIORITY: Personal member email (e.g. rachel@, alex.smith@)
+        if is_personal_member_email(e):
+            return 100 + domain_match
+            
+        # #2 Secondary: Direct agency growth/newbiz mailboxes
         prefix_score = 0
         for idx, pref in enumerate(PRIORITY_PREFIXES):
             if user.startswith(pref):
-                prefix_score = 20 - idx
+                prefix_score = 30 - idx
                 break
                 
         if any(bad in user for bad in ["career", "job", "legal", "privacy", "billing", "press", "info"]):
-            prefix_score = -20
+            prefix_score = -50
             
         return domain_match + prefix_score
 
@@ -206,8 +263,6 @@ def extract_agency_intelligence(website_url):
         website_url,
         urljoin(website_url, "/contact"),
         urljoin(website_url, "/about"),
-        urljoin(website_url, "/services"),
-        urljoin(website_url, "/work"),
     ]
 
     for url in pages_to_check:
@@ -216,7 +271,7 @@ def extract_agency_intelligence(website_url):
         visited_urls.add(url)
         
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
+            resp = requests.get(url, headers=HEADERS, timeout=3.5, allow_redirects=True)
             if resp.status_code != 200:
                 continue
                 
@@ -266,10 +321,14 @@ def extract_agency_intelligence(website_url):
                 if is_valid_email(clean_email):
                     found_emails.append(clean_email)
 
-            if any(agency_domain in e for e in found_emails if agency_domain) and found_ig_handle and found_linkedin_url and has_web_services:
+            # Fast break: if agency offers web dev (disqualified) or if valid email is found, stop querying further pages
+            if has_web_services or found_emails:
                 break
 
         except Exception:
+            # If the primary homepage fails to connect, abort checking subpages
+            if len(visited_urls) <= 1:
+                break
             continue
 
     combined_text = " ".join(all_page_text)
@@ -277,6 +336,7 @@ def extract_agency_intelligence(website_url):
     
     sorted_emails = prioritize_emails(found_emails, agency_domain)
     primary_email = sorted_emails[0] if sorted_emails else None
+    contact_person = extract_person_name_from_email(primary_email) if primary_email else None
     
     import urllib.parse
     brand_keyword = agency_domain.split(".")[0].replace("-", " ")
@@ -284,6 +344,7 @@ def extract_agency_intelligence(website_url):
 
     return {
         "primary_email": primary_email,
+        "contact_person": contact_person,
         "all_emails": sorted_emails,
         "instagram_handle": found_ig_handle or "Not Listed",
         "instagram_url": found_ig_url or "",

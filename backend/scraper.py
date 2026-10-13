@@ -224,7 +224,79 @@ CURATED_UK_MARKETING_AGENCIES = [
     {"name": "Brands2Life", "website": "https://brands2life.com", "city": "London, UK"},
     {"name": "Cirkle", "website": "https://cirkle.com", "city": "London, UK"},
     {"name": "Clarity Global", "website": "https://clarity.global", "city": "London, UK"},
-    {"name": "Engine Misfits", "website": "https://enginemisfits.com", "city": "London, UK"},
+    {"name": "Goat Agency", "website": "https://thegoatagency.com", "city": "London, UK"},
+    {"name": "Billion Dollar Boy", "website": "https://billiondollarboy.com", "city": "London, UK"},
+    {"name": "Whalar", "website": "https://whalar.com", "city": "London, UK"},
+    {"name": "ITB Worldwide", "website": "https://itb-worldwide.com", "city": "London, UK"},
+    {"name": "Seed Marketing", "website": "https://seedmarketingagency.com", "city": "London, UK"},
+    {"name": "Kyma Media", "website": "https://kymamedia.com", "city": "London, UK"},
+    {"name": "Disrupt Marketing", "website": "https://disruptmarketing.co", "city": "London, UK"},
+    {"name": "Distinctly", "website": "https://distinctly.co", "city": "London, UK"},
+    {"name": "Passion Digital", "website": "https://passiondigital.co.uk", "city": "London, UK"},
+    {"name": "Crafted", "website": "https://crafted.co.uk", "city": "London, UK"},
+    {"name": "Tug Agency", "website": "https://tugagency.com", "city": "London, UK"},
+    {"name": "Jellyfish", "website": "https://jellyfish.com", "city": "London, UK"},
+    {"name": "Croud", "website": "https://croud.com", "city": "London, UK"},
+    {"name": "Roast Agency", "website": "https://roastagency.com", "city": "London, UK"},
+    {"name": "Brave Bison", "website": "https://bravebison.com", "city": "London, UK"},
+    {"name": "That Lot", "website": "https://thatlot.co.uk", "city": "London, UK"},
+    {"name": "Frank PR", "website": "https://welcometofrank.com", "city": "London, UK"},
+    {"name": "Hope&Glory PR", "website": "https://hopeandglorypr.com", "city": "London, UK"},
+    {"name": "Red Consultancy", "website": "https://redconsultancy.com", "city": "London, UK"},
+    {"name": "FleishmanHillard UK", "website": "https://fleishmanhillard.co.uk", "city": "London, UK"},
+    {"name": "Grayling UK", "website": "https://grayling.com", "city": "London, UK"},
+    {"name": "Portland Communications", "website": "https://portland-communications.com", "city": "London, UK"},
+    {"name": "Weber Shandwick UK", "website": "https://webershandwick.co.uk", "city": "London, UK"},
+    {"name": "Eulogy", "website": "https://eulogy.co.uk", "city": "London, UK"},
+    {"name": "Firefly Communications", "website": "https://fireflycomms.com", "city": "London, UK"},
+    {"name": "Hotwire PR UK", "website": "https://hotwireglobal.com", "city": "London, UK"},
+    {"name": "Aspectus Group", "website": "https://aspectusgroup.com", "city": "London, UK"},
+    {"name": "Wild Card PR", "website": "https://wildcardpr.co.uk", "city": "London, UK"},
+    {"name": "Ready10", "website": "https://ready10.media", "city": "London, UK"},
+    {"name": "Cow PR", "website": "https://cowpr.com", "city": "London, UK"},
+    {"name": "Milk & Honey PR", "website": "https://milkandhoneypr.com", "city": "London, UK"},
+    {"name": "The Romans", "website": "https://wearetheromans.com", "city": "London, UK"},
+    {"name": "Taylor Herring", "website": "https://taylorherring.com", "city": "London, UK"},
+    {"name": "Stand Agency", "website": "https://standagency.com", "city": "London, UK"},
+    {"name": "GingerMay", "website": "https://gingermay.com", "city": "London, UK"},
+    {"name": "Missive", "website": "https://missive.co.uk", "city": "London, UK"},
+    {"name": "CCgroup PR", "website": "https://ccgrouppr.com", "city": "London, UK"},
+    {"name": "Babel PR", "website": "https://babelpr.com", "city": "London, UK"},
+    {"name": "Firstlight PR", "website": "https://firstlightpr.com", "city": "London, UK"},
+    {"name": "Berkeley Communications", "website": "https://berkeleypr.com", "city": "London, UK"},
+    {"name": "FieldHouse Associates", "website": "https://fieldhouseassociates.com", "city": "London, UK"},
+    {"name": "Kaizo", "website": "https://kaizo.co.uk", "city": "London, UK"},
+    {"name": "The Playbook", "website": "https://wearetheplaybook.com", "city": "London, UK"},
+    {"name": "Allison+Partners UK", "website": "https://allisonworldwide.com", "city": "London, UK"},
+    {"name": "Battenhall", "website": "https://battenhall.com", "city": "London, UK"},
+    {"name": "Ginger Comms", "website": "https://gingercomms.com", "city": "London, UK"},
+    {"name": "Seven Dials PR", "website": "https://sevendialspr.com", "city": "London, UK"},
+    {"name": "Storm Communications", "website": "https://stormcom.co.uk", "city": "London, UK"},
+    {"name": "Clementine Comms", "website": "https://clementinecomms.com", "city": "London, UK"},
+    {"name": "Palm PR", "website": "https://palm-pr.com", "city": "London, UK"},
+    {"name": "Gabriel PR", "website": "https://gabrielpr.co.uk", "city": "London, UK"},
+    {"name": "Sunny Side Up", "website": "https://sunnysideup.co.uk", "city": "London, UK"},
+    {"name": "Curzon PR", "website": "https://curzonpr.com", "city": "London, UK"},
+    {"name": "Gong Communications", "website": "https://gongcommunications.com", "city": "London, UK"},
+    {"name": "Four Communications", "website": "https://fourcommunications.com", "city": "London, UK"},
+    {"name": "Lansons", "website": "https://lansons.com", "city": "London, UK"},
+    {"name": "Hanover Communications", "website": "https://hanovercomms.com", "city": "London, UK"},
+    {"name": "SEC Newgate UK", "website": "https://secnewgate.co.uk", "city": "London, UK"},
+    {"name": "Cicero Group", "website": "https://cicero-group.com", "city": "London, UK"},
+    {"name": "Headland Consultancy", "website": "https://headlandconsultancy.com", "city": "London, UK"},
+    {"name": "MHP Group", "website": "https://mhpgroup.com", "city": "London, UK"},
+    {"name": "Instinctif Partners", "website": "https://instinctif.com", "city": "London, UK"},
+    {"name": "Hudson Sandler", "website": "https://hudsonsandler.com", "city": "London, UK"},
+    {"name": "Powerscourt Group", "website": "https://powerscourt-group.com", "city": "London, UK"},
+    {"name": "Camargue", "website": "https://camargue.uk", "city": "London, UK"},
+    {"name": "Citypress", "website": "https://citypress.co.uk", "city": "Manchester, UK"},
+    {"name": "Tangerine Communications", "website": "https://tangerinecomms.com", "city": "Manchester, UK"},
+    {"name": "Brazen PR", "website": "https://brazenpr.com", "city": "Manchester, UK"},
+    {"name": "Smoking Gun PR", "website": "https://smokinggunpr.co.uk", "city": "Manchester, UK"},
+    {"name": "Hatch Communications", "website": "https://hatch.group", "city": "Leeds, UK"},
+    {"name": "Prohibition PR", "website": "https://prohibitionpr.co.uk", "city": "Leeds, UK"},
+    {"name": "Umpf", "website": "https://umpf.co.uk", "city": "Leeds, UK"},
+    {"name": "Connect Communications", "website": "https://connectpa.co.uk", "city": "London, UK"},
 ]
 
 
@@ -304,7 +376,7 @@ def clean_agency_name(raw_title, domain):
         cleaned = domain.split(".")[0].replace("-", " ").title()
     return cleaned
 
-def search_duckduckgo_organic(query, timeout=12):
+def search_duckduckgo_organic(query, timeout=5):
     """
     Actively queries DuckDuckGo search for organic agency websites.
     Tries DuckDuckGo Lite first (resilient against datacenter blocks), then HTML fallback.
@@ -382,25 +454,92 @@ def search_duckduckgo_organic(query, timeout=12):
 
     return candidates
 
+def search_bing_organic(query, timeout=5):
+    """
+    Scrapes Bing search results for organic marketing agency websites.
+    Bing is lenient with cloud IPs and returns high quality results.
+    """
+    candidates = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.bing.com/"
+    }
+    import urllib.parse
+    url = f"https://www.bing.com/search?q={urllib.parse.quote(query)}"
+    try:
+        resp = requests.get(url, headers=headers, timeout=timeout)
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for item in soup.find_all("li", class_="b_algo"):
+                h2 = item.find("h2")
+                if not h2:
+                    continue
+                a_tag = h2.find("a")
+                if not a_tag or not a_tag.get("href"):
+                    continue
+                raw_href = a_tag["href"].strip()
+                if not raw_href.startswith("http"):
+                    continue
+                parsed = urlparse(raw_href)
+                domain = parsed.netloc.replace("www.", "").lower().strip()
+                if not domain or any(ign in domain for ign in IGNORED_SEARCH_DOMAINS):
+                    continue
+                clean_website = f"{parsed.scheme}://{parsed.netloc}"
+                title_text = a_tag.get_text(strip=True)
+                candidates.append({
+                    "name": clean_agency_name(title_text, domain),
+                    "website": clean_website,
+                    "domain": domain
+                })
+    except Exception:
+        pass
+    return candidates
+
+def search_live_web_agencies(query):
+    """
+    Combines DuckDuckGo and Bing for resilient multi-engine organic live scraping.
+    """
+    combined = []
+    seen = set()
+
+    # Engine 1: DuckDuckGo Lite / HTML
+    ddg_res = search_duckduckgo_organic(query)
+    for r in ddg_res:
+        if r["domain"] not in seen:
+            seen.add(r["domain"])
+            combined.append(r)
+
+    # Engine 2: Bing Search
+    bing_res = search_bing_organic(query)
+    for r in bing_res:
+        if r["domain"] not in seen:
+            seen.add(r["domain"])
+            combined.append(r)
+
+    return combined
+
 def get_search_queries_for_region(region="Australia"):
     """
     Builds rotating query matrix combining marketing niches and cities for the region.
     """
-    clean_region = region.strip().title() if region else "Australia"
+    clean_region = region.strip() if region else "Australia"
+    lower_r = clean_region.lower()
     
     # Sub-locations for common regions
     au_cities = ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Byron Bay", "Newcastle", "Australia"]
     us_cities = ["New York", "Los Angeles", "Chicago", "Austin", "Miami", "San Francisco", "Atlanta", "Seattle", "United States"]
-    uk_cities = ["London", "Manchester", "Birmingham", "Leeds", "Bristol", "Edinburgh", "United Kingdom"]
+    uk_cities = ["London", "Manchester", "Birmingham", "Leeds", "Bristol", "Edinburgh", "Glasgow", "United Kingdom"]
     
-    if any(k in clean_region.lower() for k in ["australia", "au", "aus"]):
-        locations = au_cities
-    elif any(k in clean_region.lower() for k in ["united states", "usa", "us", "america"]):
-        locations = us_cities
-    elif any(k in clean_region.lower() for k in ["united kingdom", "uk", "britain", "england"]):
-        locations = uk_cities
+    if any(k in lower_r for k in ["australia", "au", "aus", "sydney", "melbourne", "brisbane", "perth", "adelaide", "gold coast"]):
+        locations = [clean_region] + [c for c in au_cities if c.lower() != lower_r]
+    elif any(k in lower_r for k in ["united states", "usa", "us", "america", "new york", "los angeles", "chicago", "austin", "miami", "san francisco", "atlanta"]):
+        locations = [clean_region] + [c for c in us_cities if c.lower() != lower_r]
+    elif any(k in lower_r for k in ["london", "united kingdom", "uk", "britain", "england", "manchester", "birmingham", "leeds", "bristol", "edinburgh"]):
+        locations = [clean_region] + [c for c in uk_cities if c.lower() != lower_r]
     else:
-        locations = [clean_region]
+        locations = [clean_region, f"{clean_region} Marketing"]
 
     niches = [
         "social media marketing agency",
@@ -425,43 +564,25 @@ def get_search_queries_for_region(region="Australia"):
 def active_scrape_generator(region="Australia"):
     """
     Continuous generator that actively discovers marketing agencies for the given region.
-    Yields agency records one by one until the target count is satisfied.
+    1. FIRST: Actively scrapes the live web dynamically via DuckDuckGo + Bing across rotating niches for the city.
+    2. Does NOT fall back to pre-seeded after one block or empty result — iterates through all live search queries.
+    3. ONLY AFTER live web searches have finished, if the target is still unmet (due to skipped web dev sites or missing emails),
+       it yields from the verified regional pool as a safety net so the campaign completes its goal.
     """
     seen_domains = set()
     clean_region = region.strip() if region else "Australia"
-    is_au = any(k in clean_region.lower() for k in ["australia", "au", "aus", "sydney", "melbourne", "brisbane", "perth", "adelaide", "gold coast"])
-    is_us = any(k in clean_region.lower() for k in ["united states", "usa", "us", "new york", "los angeles", "chicago", "austin", "miami", "san francisco", "atlanta", "seattle"])
-    is_uk = any(k in clean_region.lower() for k in ["london", "united kingdom", "uk", "manchester", "birmingham", "leeds", "bristol", "edinburgh", "glasgow", "england", "britain"])
+    lower_r = clean_region.lower()
 
-    # 1. Fast seed: yield curated agencies for instant zero-delay start matching region
-    if is_au:
-        seed_list = CURATED_AU_MARKETING_AGENCIES
-    elif is_us:
-        seed_list = CURATED_US_MARKETING_AGENCIES
-    elif is_uk:
-        seed_list = CURATED_UK_MARKETING_AGENCIES
-    else:
-        # Fallback for any other custom city: blend global agency database
-        seed_list = CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
-
-    for agency in seed_list:
-        domain = urlparse(agency["website"]).netloc.replace("www.", "").lower()
-        if domain not in seen_domains:
-            seen_domains.add(domain)
-            yield {
-                "name": agency["name"],
-                "website": agency["website"],
-                "city": agency.get("city", clean_region)
-            }
-
-    # 2. Continuous dynamic active search scraping
+    # =========================================================================
+    # STEP 1: ACTIVE LIVE DYNAMIC WEB SCRAPING FIRST
+    # =========================================================================
     queries = get_search_queries_for_region(clean_region)
-    print(f"\n[*] Actively searching search engines across {len(queries)} marketing niche queries for {clean_region}...")
+    print(f"\n[*] [Live Search Engine] Actively scraping live web across {len(queries)} niche queries for '{clean_region}'...")
 
     for query, loc in queries:
-        print(f"[*] Querying: '{query}'...")
-        results = search_duckduckgo_organic(query)
-        for r in results:
+        print(f"[*] Querying live engines for: '{query}'...")
+        live_results = search_live_web_agencies(query)
+        for r in live_results:
             domain = r["domain"]
             if domain not in seen_domains:
                 seen_domains.add(domain)
@@ -470,7 +591,47 @@ def active_scrape_generator(region="Australia"):
                     "website": r["website"],
                     "city": f"{loc}"
                 }
-        time.sleep(1.5)
+        # Humane jitter delay between queries to avoid rate limits
+        time.sleep(1.2)
+
+    # =========================================================================
+    # STEP 2: FALLBACK SAFETY NET (ONLY AFTER LIVE SEARCH FINISHES)
+    # =========================================================================
+    # If the caller's target count hasn't been met (e.g. many live sites lacked emails),
+    # smoothly tap into curated databases so the campaign isn't left incomplete.
+    print(f"\n[*] [Safety Fallback] Live search completed. Checking backup agency pool for '{clean_region}'...")
+
+    is_au = any(k in lower_r for k in ["australia", "au", "aus", "sydney", "melbourne", "brisbane", "perth", "adelaide", "gold coast"])
+    is_us = any(k in lower_r for k in ["united states", "usa", "us", "america", "new york", "los angeles", "chicago", "austin", "miami", "san francisco", "atlanta", "seattle"])
+    is_uk = any(k in lower_r for k in ["london", "united kingdom", "uk", "manchester", "birmingham", "leeds", "bristol", "edinburgh", "glasgow", "england", "britain"])
+
+    if is_uk:
+        backup_pool = sorted(
+            CURATED_UK_MARKETING_AGENCIES,
+            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
+        ) + CURATED_US_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
+    elif is_us:
+        backup_pool = sorted(
+            CURATED_US_MARKETING_AGENCIES,
+            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
+        ) + CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES
+    elif is_au:
+        backup_pool = sorted(
+            CURATED_AU_MARKETING_AGENCIES,
+            key=lambda x: 0 if lower_r in x.get("city", "").lower() else 1
+        ) + CURATED_UK_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
+    else:
+        backup_pool = CURATED_UK_MARKETING_AGENCIES + CURATED_AU_MARKETING_AGENCIES + CURATED_US_MARKETING_AGENCIES
+
+    for agency in backup_pool:
+        domain = urlparse(agency["website"]).netloc.replace("www.", "").lower()
+        if domain not in seen_domains:
+            seen_domains.add(domain)
+            yield {
+                "name": agency["name"],
+                "website": agency["website"],
+                "city": agency.get("city", clean_region)
+            }
 
 def get_marketing_agencies(country="AU", limit=100):
     """

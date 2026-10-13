@@ -204,18 +204,22 @@ def run_campaign_worker(req: CampaignRequest):
             discovered_count += 1
             tracker.save_discovered_lead(agency_name, website, city, email, ig_handle, specialties, offers_web)
 
-            # Generate pitch using Gemini AI or template
+            contact_person = intel.get("contact_person")
+
+            # Generate pitch using Gemini AI or template addressed directly to contact person
             pitch = generate_marketing_pitch(
                 agency_name=agency_name,
                 city=city,
                 ig_handle=ig_handle,
                 specialties=specialties,
                 site_title=intel.get("site_title"),
-                subject_template=req.subject_template
+                subject_template=req.subject_template,
+                contact_name=contact_person
             )
 
             lead_record = {
                 "agency_name": agency_name,
+                "contact_person": contact_person or "",
                 "website": website,
                 "city": city,
                 "email": email,
@@ -431,10 +435,10 @@ def campaign_stream():
             
             while True:
                 try:
-                    payload = client_queue.get(timeout=20.0)
+                    payload = client_queue.get(timeout=3.0)
                     yield f"data: {payload}\n\n"
                 except queue.Empty:
-                    # Keep-alive heartbeat
+                    # Keep-alive heartbeat every 3 seconds to prevent proxy and mobile timeouts
                     yield f": keep-alive\n\n"
         except GeneratorExit:
             if client_queue in event_subscribers:

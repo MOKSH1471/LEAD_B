@@ -27,7 +27,7 @@ def format_html_pitch(plain_text):
 {"".join(html_paragraphs)}
 </div>""".strip()
 
-def generate_pitch_with_gemini(agency_name, city=None, ig_handle=None, specialties=None, site_title=None, subject_template=None, api_key=None):
+def generate_pitch_with_gemini(agency_name, city=None, ig_handle=None, specialties=None, site_title=None, subject_template=None, contact_name=None, api_key=None):
     """
     Uses Google Gemini API (Free tier) to craft hyper-personalized cold outreach pitches.
     """
@@ -40,6 +40,8 @@ def generate_pitch_with_gemini(agency_name, city=None, ig_handle=None, specialti
     ig_str = f" ({ig_handle})" if ig_handle and ig_handle != "Not Listed" else ""
     spec_str = ", ".join(specialties) if specialties else "Marketing & Growth Campaigns"
     title_snippet = f"Website Tagline/Headline: {site_title}" if site_title else ""
+    person_snippet = f"- Target Individual: {contact_name} at {clean_name}" if contact_name else f"- Target Agency: {clean_name}"
+    greeting_rule = f"Address them directly as 'Hi {contact_name},'" if contact_name else f"Address them as 'Hi {clean_name} team,'"
 
     model = getattr(config, "GEMINI_MODEL", "gemini-2.0-flash").strip()
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
@@ -49,7 +51,7 @@ def generate_pitch_with_gemini(agency_name, city=None, ig_handle=None, specialti
 Write a hyper-personalized, authentic, concise cold partnership pitch to this marketing agency.
 
 Target Agency Profile:
-- Agency Name: {clean_name}
+{person_snippet}
 - Location: {location_str or 'Australia'}
 - Instagram: {ig_str or 'Active'}
 - Core Services: {spec_str}
@@ -59,7 +61,7 @@ Offer & Context:
 Galileo & Duke acts as their white-label digital engineering partner. Because this agency focuses on marketing, PR, ads, and branding, and DOES NOT build websites in-house, they can sell high-ticket websites and custom landing pages to their clients under their brand, while we build them silently.
 
 Writing Rules:
-1. Tone: Warm, human, founder-to-founder peer conversation. Absolutely ZERO corporate fluff, cringe buzzwords, or robotic AI intros (never start with "I hope this email finds you well" or "In today's fast-paced digital world").
+1. Tone & Greeting: Start with "{greeting_rule}". Warm, human, founder-to-founder peer conversation. Absolutely ZERO corporate fluff, cringe buzzwords, or robotic AI intros (never start with "I hope this email finds you well").
 2. Subject line: Follow the clean enquiry format: "Enquiry for {clean_name}" or "Enquiry for {clean_name} — Web Development Partner".
 3. Length: Maximum 3 to 4 punchy sentences/short paragraphs.
 4. Call to Action: Low-friction (e.g. "Open to seeing a couple of recent websites we've built?").
@@ -88,7 +90,7 @@ Respond in STRICT JSON:
     }
 
     try:
-        resp = requests.post(url, json=payload, timeout=12)
+        resp = requests.post(url, json=payload, timeout=6)
         if resp.status_code == 200:
             result = resp.json()
             candidates = result.get("candidates", [])
@@ -118,13 +120,14 @@ Respond in STRICT JSON:
 
     return None
 
-def generate_template_pitch(agency_name, city=None, ig_handle=None, specialties=None, subject_template=None):
+def generate_template_pitch(agency_name, city=None, ig_handle=None, specialties=None, subject_template=None, contact_name=None):
     """
     Proven, high-converting standard template pitch used as baseline and fallback.
     """
     clean_name = agency_name.strip() if agency_name else "team"
     location_str = f" in {city}" if city and city != "Unknown" else ""
     ig_mention = f" and on Instagram ({ig_handle})" if ig_handle and ig_handle != "Not Listed" else ""
+    greeting = f"Hi {contact_name}," if contact_name else f"Hi {clean_name} team,"
 
     template = subject_template or getattr(config, "EMAIL_SUBJECT_TEMPLATE", "Enquiry for {agency_name}")
     try:
@@ -132,7 +135,7 @@ def generate_template_pitch(agency_name, city=None, ig_handle=None, specialties=
     except Exception:
         subject = template
 
-    plain_body = f"""Hi {clean_name} team,
+    plain_body = f"""{greeting}
 
 Loved your marketing work{location_str}{ig_mention} - really impressed by the campaigns and growth you drive for your clients.
 
@@ -167,7 +170,7 @@ https://www.galileoandduke.com
     }
 
 
-def generate_marketing_pitch(agency_name, city=None, ig_handle=None, specialties=None, site_title=None, subject_template=None):
+def generate_marketing_pitch(agency_name, city=None, ig_handle=None, specialties=None, site_title=None, subject_template=None, contact_name=None):
     """
     Main generator: Uses Gemini AI when GEMINI_API_KEY is configured, 
     otherwise falls back to the high-converting default template.
@@ -179,7 +182,8 @@ def generate_marketing_pitch(agency_name, city=None, ig_handle=None, specialties
             ig_handle=ig_handle,
             specialties=specialties,
             site_title=site_title,
-            subject_template=subject_template
+            subject_template=subject_template,
+            contact_name=contact_name
         )
         if ai_pitch:
             return ai_pitch
@@ -189,6 +193,7 @@ def generate_marketing_pitch(agency_name, city=None, ig_handle=None, specialties
         city=city,
         ig_handle=ig_handle,
         specialties=specialties,
-        subject_template=subject_template
+        subject_template=subject_template,
+        contact_name=contact_name
     )
 

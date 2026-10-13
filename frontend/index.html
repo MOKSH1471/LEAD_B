@@ -227,6 +227,8 @@
                 <span class="row-desc" id="settingTargetCityDesc">Australia</span>
               </div>
               <button class="pill-badge pill-silver" id="btnSettingChangeCity" style="cursor: pointer;">CHANGE 📍</button>
+            </div>
+
             <div class="settings-row interactive-row" id="settingBackendUrlRow">
               <div class="row-info">
                 <span class="row-title">Backend Server URL</span>
@@ -371,11 +373,11 @@
 
           <!-- Mode Toggle Switch (Dry Run vs Live Send) -->
           <div class="mode-switch-container">
-            <button class="mode-toggle-btn active" id="btnModeDryRun">
-              <span>Dry Run / Preview</span>
+            <button class="mode-toggle-btn active" id="btnModeLiveSend">
+              <span>⚡ Live Auto-Send</span>
             </button>
-            <button class="mode-toggle-btn" id="btnModeLiveSend">
-              <span>Live Outreach Send</span>
+            <button class="mode-toggle-btn" id="btnModeDryRun">
+              <span>👁 Preview Only</span>
             </button>
           </div>
 
@@ -387,7 +389,7 @@
 
           <!-- Big Neon Launch Button -->
           <button class="btn-primary-neon" id="btnStartCampaignNow">
-            <span>START OUTREACH CAMPAIGN</span>
+            <span>START OUTREACH &amp; AUTO-SEND</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
@@ -396,13 +398,16 @@
       <!-- ================= LIVE RUNNING OVERLAY / PROGRESS SHEET ================= -->
       <div class="modal-backdrop" id="progressModal">
         <div class="action-sheet progress-sheet">
-          <div class="sheet-handle"></div>
+          <div class="sheet-handle" id="progressSheetHandle" title="Tap or drag to dismiss"></div>
           <div class="sheet-header">
             <div class="running-indicator">
-              <span class="pulse-radar"></span>
+              <span class="pulse-radar" id="progressPulseDot"></span>
               <h2 class="sheet-title" id="progressTitle">Scraping &amp; Contacting...</h2>
             </div>
-            <button class="btn-stop-campaign" id="btnStopCampaign">Stop</button>
+            <div class="progress-header-actions">
+              <button class="btn-stop-campaign" id="btnStopCampaign">Stop</button>
+              <button class="sheet-close" id="btnCloseProgressModal" aria-label="Close" title="Back to Radar">&times;</button>
+            </div>
           </div>
 
           <!-- Progress Ring & Numbers -->
@@ -431,6 +436,12 @@
           <div class="live-log-container" id="liveLogConsole">
             <div class="log-entry log-info">[System] Connected to Galileo &amp; Duke Engine</div>
           </div>
+
+          <!-- Return to Dashboard Button -->
+          <button class="btn-primary-neon btn-dashboard-return" id="btnDoneProgress">
+            <span>RETURN TO DASHBOARD</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
       </div>
 

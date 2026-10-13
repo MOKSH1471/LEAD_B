@@ -218,13 +218,16 @@ def generate_leads_pdf(leads, output_filename=None, region="Australia"):
             else:
                 ig_actions_html += f'<span style="color:#64748b;">Instagram: {ig_handle}</span>'
 
+            contact_name = escape_html(lead.get("contact_person") or "")
+            contact_meta = f" &bull; <b>Direct Contact:</b> {contact_name}" if contact_name else ""
+
             card_html = f"""
             <div class="card">
                 <div class="card-title">#{overall_index}. {name}</div>
                 <div class="meta-line">
                     <b>Website:</b> {website_link_html} &bull; 
                     <b>Location:</b> {city} &bull; 
-                    <b>Status:</b> {status}
+                    <b>Status:</b> {status}{contact_meta}
                 </div>
 
                 <!-- EMAIL SECTION -->

@@ -34,7 +34,7 @@ EMAIL_SUBJECT_TEMPLATE = os.getenv("EMAIL_SUBJECT_TEMPLATE", "Enquiry for {agenc
 
 # Gemini AI Custom Pitch Generation (Optional free tier key)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest").strip()
 
 # File paths
 DATA_DIR = BASE_DIR

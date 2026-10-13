@@ -10,23 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     activeRegion: 'Australia',
     activeFlag: '🇦🇺',
     targetCount: 10,
-    isDryRun: true,
+    isDryRun: false,
     leads: [],
     selectedLead: null,
     campaignRunning: false,
     eventSource: null
   };
 
-  // Dynamic API Base URL resolver (for connecting APK to external backend)
+  // Dynamic API Base URL resolver (Pre-seeded with live Render backend)
   function getApiBase() {
     const saved = localStorage.getItem('GND_BACKEND_URL');
     if (saved && saved.trim()) {
       return saved.trim().replace(/\/+$/, '');
     }
-    if (window.location.protocol.startsWith('http')) {
+    // If running in browser hosted on Render or custom domain, use relative path ''
+    if (window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
       return '';
     }
-    return 'http://10.0.2.2:8000';
+    // Seeded default for APK
+    return 'https://gandd-backend.onrender.com';
   }
 
   // DOM Elements
@@ -66,7 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const launchModal = document.getElementById('launchModal');
   const btnCloseLaunchModal = document.getElementById('btnCloseLaunchModal');
   const progressModal = document.getElementById('progressModal');
+  const progressTitle = document.getElementById('progressTitle');
   const btnStopCampaign = document.getElementById('btnStopCampaign');
+  const btnCloseProgressModal = document.getElementById('btnCloseProgressModal');
+  const btnDoneProgress = document.getElementById('btnDoneProgress');
+  const progressSheetHandle = document.getElementById('progressSheetHandle');
+  const progressPulseDot = document.getElementById('progressPulseDot');
   const leadDetailModal = document.getElementById('leadDetailModal');
   const btnCloseLeadDrawer = document.getElementById('btnCloseLeadDrawer');
   const btnDoneLeadDrawer = document.getElementById('btnDoneLeadDrawer');
@@ -201,6 +208,57 @@ document.addEventListener('DOMContentLoaded', () => {
     leadDetailModal.addEventListener('click', (e) => {
       if (e.target === leadDetailModal) closeModal(leadDetailModal);
     });
+  }
+
+  // Progress modal dismissal handlers
+  if (btnCloseProgressModal) {
+    btnCloseProgressModal.addEventListener('click', () => {
+      closeModal(progressModal);
+      if (state.campaignRunning) {
+        showToast('Campaign active in background');
+      }
+    });
+  }
+
+  if (btnDoneProgress) {
+    btnDoneProgress.addEventListener('click', () => {
+      closeModal(progressModal);
+    });
+  }
+
+  if (progressModal) {
+    progressModal.addEventListener('click', (e) => {
+      if (e.target === progressModal) {
+        closeModal(progressModal);
+        if (state.campaignRunning) {
+          showToast('Campaign active in background');
+        }
+      }
+    });
+  }
+
+  if (progressSheetHandle) {
+    progressSheetHandle.addEventListener('click', () => {
+      closeModal(progressModal);
+      if (state.campaignRunning) {
+        showToast('Campaign active in background');
+      }
+    });
+  }
+
+  // Android Hardware Back Button Support
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+    try {
+      window.Capacitor.Plugins.App.addListener('backButton', () => {
+        if (progressModal && progressModal.classList.contains('active')) {
+          closeModal(progressModal);
+        } else if (leadDetailModal && leadDetailModal.classList.contains('active')) {
+          closeModal(leadDetailModal);
+        } else if (launchModal && launchModal.classList.contains('active')) {
+          closeModal(launchModal);
+        }
+      });
+    } catch (e) {}
   }
 
   if (btnCloseLeadDrawer) btnCloseLeadDrawer.addEventListener('click', () => closeModal(leadDetailModal));
@@ -340,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.isDryRun = false;
     btnModeLiveSend.classList.add('active');
     btnModeDryRun.classList.remove('active');
-    btnStartCampaignNow.querySelector('span').textContent = 'LAUNCH LIVE OUTREACH';
+    btnStartCampaignNow.querySelector('span').textContent = 'START OUTREACH & AUTO-SEND';
   });
 
   // 5. Start Campaign Handler
@@ -357,6 +415,20 @@ document.addEventListener('DOMContentLoaded', () => {
     liveLeadCity.textContent = state.activeRegion;
     liveLeadWebsite.textContent = 'Active Search Engine Stream';
     liveLogConsole.innerHTML = `<div class="log-entry log-info">[Radar] Starting ${state.isDryRun ? 'DRY RUN' : 'LIVE'} outreach in ${state.activeRegion} (Target: ${state.targetCount})</div>`;
+
+    if (btnStopCampaign) {
+      btnStopCampaign.textContent = 'Stop';
+      btnStopCampaign.classList.remove('completed');
+    }
+    if (btnDoneProgress) {
+      btnDoneProgress.style.display = 'none';
+    }
+    if (progressPulseDot) {
+      progressPulseDot.style.display = 'block';
+    }
+    if (progressTitle) {
+      progressTitle.textContent = state.isDryRun ? 'Scraping & Previewing...' : 'Scraping & Contacting...';
+    }
 
     cardStatusBadge.textContent = 'SCANNING...';
     cardStatusBadge.style.color = '#FFFFFF';
@@ -392,6 +464,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Stop Campaign Handler
   if (btnStopCampaign) {
     btnStopCampaign.addEventListener('click', async () => {
+      // If campaign is already finished or stopped, "Stop" button acts as "Done / Close"
+      if (!state.campaignRunning) {
+        closeModal(progressModal);
+        return;
+      }
       try {
         await fetch(`${getApiBase()}/api/campaign/stop`, { method: 'POST' });
         progressStatusText.textContent = 'Halting engine gracefully...';
@@ -460,8 +537,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const pct = Math.min(100, Math.round((current / target) * 100));
       progressBarFill.style.width = `${pct}%`;
 
-      progressStatusText.textContent = `${mode === 'sent' ? 'Delivered email to' : 'Qualified lead:'} ${lead.agency_name}`;
-      appendLog(`[${mode === 'sent' ? 'SENT' : 'QUALIFIED'}] ${lead.agency_name} <${lead.email}>`, 'log-success');
+      if (mode === 'sent') {
+        const who = lead.contact_person ? `${lead.contact_person} at ${lead.agency_name}` : lead.agency_name;
+        progressStatusText.textContent = `Sent live email: ${who}`;
+        appendLog(`[SENT LIVE] ${who} <${lead.email}> (Titan SMTP)`, 'log-success');
+      } else {
+        const who = lead.contact_person ? `${lead.contact_person} (${lead.agency_name})` : lead.agency_name;
+        progressStatusText.textContent = `Qualified lead: ${who}`;
+        appendLog(`[PREVIEW] ${who} <${lead.email}> (Dry Run)`, 'log-info');
+      }
 
       // Refresh background leads data and counters
       loadStats();
@@ -470,10 +554,17 @@ document.addEventListener('DOMContentLoaded', () => {
       appendLog(`[Error] Failed ${data.name}: ${data.error}`, 'log-error');
     } else if (type === 'campaign_stopped') {
       state.campaignRunning = false;
-      progressStatusText.textContent = 'Campaign stopped by user.';
+      progressStatusText.textContent = 'Campaign stopped.';
       cardStatusBadge.textContent = 'ENGINE READY';
       if (islandStatus) islandStatus.textContent = 'Radar Idle';
       if (liveBadgeDot) liveBadgeDot.style.display = 'none';
+      if (btnStopCampaign) {
+        btnStopCampaign.textContent = 'Close';
+        btnStopCampaign.classList.add('completed');
+      }
+      if (btnDoneProgress) {
+        btnDoneProgress.style.display = 'flex';
+      }
       appendLog('[System] Outreach engine stopped.', 'log-info');
     } else if (type === 'campaign_completed') {
       state.campaignRunning = false;
@@ -482,6 +573,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (islandStatus) islandStatus.textContent = 'Ready';
       if (liveBadgeDot) liveBadgeDot.style.display = 'none';
       progressBarFill.style.width = '100%';
+      if (btnStopCampaign) {
+        btnStopCampaign.textContent = 'Done';
+        btnStopCampaign.classList.add('completed');
+      }
+      if (btnDoneProgress) {
+        btnDoneProgress.style.display = 'flex';
+      }
       appendLog(`[Done] Campaign completed! Generated fresh PDF dossier.`, 'log-success');
 
       showToast(`Campaign Complete! ${data.sent_count} leads processed.`);
@@ -775,10 +873,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('GND_BACKEND_URL');
       if (saved && saved.trim()) {
         settingBackendUrlDesc.textContent = saved.trim();
-      } else if (window.location.protocol.startsWith('http')) {
-        settingBackendUrlDesc.textContent = `${window.location.origin} (Auto)`;
       } else {
-        settingBackendUrlDesc.textContent = 'http://10.0.2.2:8000 (Default)';
+        settingBackendUrlDesc.textContent = 'https://gandd-backend.onrender.com (Live Cloud)';
       }
     }
   }
@@ -786,8 +882,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnConfigBackendUrl) {
     btnConfigBackendUrl.addEventListener('click', () => {
-      const current = localStorage.getItem('GND_BACKEND_URL') || (window.location.protocol.startsWith('http') ? window.location.origin : 'http://10.0.2.2:8000');
-      const entered = prompt('Enter your External Backend URL (e.g. https://your-server.onrender.com or http://192.168.1.X:8000):', current);
+      const current = localStorage.getItem('GND_BACKEND_URL') || 'https://gandd-backend.onrender.com';
+      const entered = prompt('Enter your External Backend URL (e.g. https://gandd-backend.onrender.com):', current);
       if (entered !== null) {
         const clean = entered.trim().replace(/\/+$/, '');
         if (clean) {

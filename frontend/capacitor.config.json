@@ -1,7 +1,7 @@
 {
   "appId": "com.galileoandduke.radar",
   "appName": "Galileo & Duke Radar",
-  "webDir": "web/static",
+  "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
     "cleartext": true,
