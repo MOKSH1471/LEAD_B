@@ -28,10 +28,10 @@ class TitanMailer:
         try:
             if self.port == 465:
                 context = ssl.create_default_context()
-                with smtplib.SMTP_SSL(self.host, self.port, context=context, timeout=15) as server:
+                with smtplib.SMTP_SSL(self.host, self.port, context=context, timeout=45) as server:
                     server.login(self.user, self.password)
             else:
-                with smtplib.SMTP(self.host, self.port, timeout=15) as server:
+                with smtplib.SMTP(self.host, self.port, timeout=45) as server:
                     server.ehlo()
                     server.starttls()
                     server.login(self.user, self.password)
@@ -42,11 +42,11 @@ class TitanMailer:
     def _save_to_sent_folder(self, raw_bytes):
         """Appends the sent email to your webmail 'Sent' folder via IMAP."""
         try:
-            imap = imaplib.IMAP4_SSL(self.imap_host, self.imap_port, timeout=10)
+            imap = imaplib.IMAP4_SSL(self.imap_host, self.imap_port, timeout=30)
             imap.login(self.user, self.password)
             imap.append('Sent', '\\Seen', imaplib.Time2Internaldate(time.time()), raw_bytes)
             imap.logout()
-        except Exception as e:
+        except Exception:
             pass
 
     def send_email(self, to_email, subject, plain_text, html_text):
@@ -79,18 +79,37 @@ class TitanMailer:
         # Generate strictly RFC-compliant CRLF bytes using policy=SMTP
         raw_bytes = msg.as_bytes(policy=SMTP)
 
-        # 1. Send via SMTP
+        # 1. Send via SMTP with generous timeout (60s) and fallback retry
+        sent = False
+        last_err = None
+        
+        ports_to_try = [self.port]
         if self.port == 465:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(self.host, self.port, context=context, timeout=20) as server:
-                server.login(self.user, self.password)
-                server.sendmail(self.sender_email, [to_email], raw_bytes)
-        else:
-            with smtplib.SMTP(self.host, self.port, timeout=20) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(self.user, self.password)
-                server.sendmail(self.sender_email, [to_email], raw_bytes)
+            ports_to_try.append(587)
+        elif self.port == 587:
+            ports_to_try.append(465)
+
+        for port in ports_to_try:
+            try:
+                if port == 465:
+                    context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL(self.host, port, context=context, timeout=60) as server:
+                        server.login(self.user, self.password)
+                        server.sendmail(self.sender_email, [to_email], raw_bytes)
+                else:
+                    with smtplib.SMTP(self.host, port, timeout=60) as server:
+                        server.ehlo()
+                        server.starttls()
+                        server.login(self.user, self.password)
+                        server.sendmail(self.sender_email, [to_email], raw_bytes)
+                sent = True
+                break
+            except Exception as e:
+                last_err = e
+                continue
+
+        if not sent:
+            raise last_err
 
         # 2. Sync to Webmail Sent folder
         self._save_to_sent_folder(raw_bytes)

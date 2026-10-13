@@ -90,7 +90,7 @@ Respond in STRICT JSON:
     }
 
     try:
-        resp = requests.post(url, json=payload, timeout=6)
+        resp = requests.post(url, json=payload, timeout=25)
         if resp.status_code == 200:
             result = resp.json()
             candidates = result.get("candidates", [])

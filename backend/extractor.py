@@ -291,9 +291,9 @@ def extract_agency_intelligence(website_url):
         
         try:
             try:
-                resp = requests.get(url, headers=HEADERS, timeout=(5.0, 8.0), allow_redirects=True)
+                resp = requests.get(url, headers=HEADERS, timeout=(12.0, 20.0), allow_redirects=True)
             except (requests.exceptions.SSLError, requests.exceptions.CertificateError):
-                resp = requests.get(url, headers=HEADERS, timeout=(5.0, 8.0), allow_redirects=True, verify=False)
+                resp = requests.get(url, headers=HEADERS, timeout=(12.0, 20.0), allow_redirects=True, verify=False)
             if resp.status_code != 200:
                 continue
                 

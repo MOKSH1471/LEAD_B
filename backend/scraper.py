@@ -412,7 +412,7 @@ def clean_agency_name(raw_title, domain):
 
 DDG_CIRCUIT_BROKEN = False
 
-def search_duckduckgo_organic(query, timeout=2.5):
+def search_duckduckgo_organic(query, timeout=6.0):
     """
     Actively queries DuckDuckGo search for organic agency websites.
     Includes a fail-fast circuit breaker to prevent freezing on blocked networks.
@@ -500,7 +500,7 @@ def search_duckduckgo_organic(query, timeout=2.5):
 
     return candidates
 
-def search_bing_organic(query, timeout=2.5):
+def search_bing_organic(query, timeout=6.0):
     """
     Scrapes Bing search results for organic marketing agency websites.
     Bing is lenient with cloud IPs and returns high quality results.
