@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Galileo &amp; Duke Radar</string>
+    <string name="title_activity_main">Galileo &amp; Duke Radar</string>
+    <string name="package_name">com.galileoandduke.radar</string>
+    <string name="custom_url_scheme">com.galileoandduke.radar</string>
+</resources>

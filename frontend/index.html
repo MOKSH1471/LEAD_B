@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Galileo &amp; Duke — Agency Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090C10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <!-- App Shell Container (Responsive Desktop Frame or Native Mobile) -->
+  <div class="app-viewport">
+    
+    <!-- Phone Screen Container -->
+    <div class="phone-frame">
+      
+
+
+      <!-- Main Scrollable Screen Content -->
+      <main class="screens-container" id="screensContainer">
+
+        <!-- ================= SCREEN 1: HOME ================= -->
+        <section class="screen active" id="screenHome">
+          <!-- Top Header -->
+          <header class="app-header">
+            <div class="user-greeting">
+              <div class="avatar-ring">
+                <img src="logo.jpg" alt="Galileo & Duke" class="avatar-logo-img">
+              </div>
+              <div class="greeting-text">
+                <span class="greeting-subtitle">Galileo &amp; Duke</span>
+                <h1 class="greeting-title">Client Radar</h1>
+              </div>
+            </div>
+            <button class="icon-btn" id="btnNotifications" title="Campaign Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span class="badge-dot" id="liveBadgeDot"></span>
+            </button>
+          </header>
+
+          <!-- Silver & Black Metallic Hero Card -->
+          <div class="hero-card" id="heroCard">
+            <div class="card-glass-glow"></div>
+            <div class="hero-top">
+              <div class="card-brand">
+                <img src="logo.jpg" alt="G&D" class="hero-brand-logo">
+                <span class="card-brand-name">GALILEO &amp; DUKE</span>
+              </div>
+              <span class="card-status-badge" id="cardStatusBadge">ENGINE READY</span>
+            </div>
+            <div class="hero-middle clickable-hero-target" id="heroChangeRegionBtn" title="Click to change target city">
+              <div class="hero-label-row">
+                <span class="hero-label">TARGET MARKET</span>
+                <span class="hero-change-hint">Tap to change ✎</span>
+              </div>
+              <div class="hero-region-display" id="heroRegionDisplay">
+                <span class="region-flag" id="heroFlag">🇦🇺</span>
+                <span class="region-name" id="heroRegionName">AUSTRALIA</span>
+              </div>
+            </div>
+            <div class="hero-bottom">
+              <span class="card-meta">White-Label Digital Engineering</span>
+              <span class="card-logo-visa">FLAGSHIP</span>
+            </div>
+          </div>
+
+          <!-- Total Balance / Metrics Section (From Reference Image) -->
+          <div class="balance-card">
+            <div class="balance-header">
+              <span class="balance-label">Total Qualified Pipeline</span>
+              <span class="balance-growth" id="growthBadge">+100% Active</span>
+            </div>
+            <div class="balance-amount-row">
+              <span class="balance-number" id="metricTotalDiscovered">45</span>
+              <span class="balance-unit">Agencies</span>
+            </div>
+            
+            <!-- Quick Action Circular Buttons (From Reference Image) -->
+            <div class="action-buttons-row">
+              <div class="action-item" id="btnQuickLaunch">
+                <button class="circle-action-btn action-lime" title="Launch Campaign">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+                <span class="action-text">Launch</span>
+              </div>
+              <div class="action-item" id="btnQuickPdf">
+                <button class="circle-action-btn" title="Download PDF Dossier">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </button>
+                <span class="action-text">PDF Dossier</span>
+              </div>
+              <div class="action-item" id="btnQuickSettings">
+                <button class="circle-action-btn" title="Settings">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <span class="action-text">Settings</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Activity / Recent Leads Feed ("Recent Transfers" in Reference) -->
+          <div class="feed-section">
+            <div class="feed-header">
+              <h2 class="feed-title">Recent Discovered Leads</h2>
+              <button class="feed-view-all" id="btnViewAllLeads">View All</button>
+            </div>
+            
+            <div class="leads-list" id="homeLeadsList">
+              <div class="loading-state">
+                <div class="spinner"></div>
+                <span>Syncing live agency radar...</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SCREEN 2: ANALYTICS & LEADS ================= -->
+        <section class="screen" id="screenAnalytics">
+          <header class="app-header">
+            <h1 class="greeting-title">Outreach Analytics</h1>
+            <div class="pill-tabs" id="analyticsTabs">
+              <button class="pill-tab active" data-tab="monthly">All Time</button>
+              <button class="pill-tab" data-tab="weekly">Active</button>
+              <button class="pill-tab" data-tab="daily">Sent</button>
+            </div>
+          </header>
+
+          <!-- Chart Card (From Reference Image) -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <span class="chart-label">Total Outreaches</span>
+                <div class="chart-value-row">
+                  <span class="chart-main-val" id="chartTotalEmails">27</span>
+                  <span class="badge-positive">+100% Inboxes</span>
+                </div>
+              </div>
+              <span class="ai-badge-chip">✨ Gemini 2.0</span>
+            </div>
+            <!-- Wave Sparkline SVG -->
+            <div class="sparkline-wrapper">
+              <svg class="sparkline-svg" viewBox="0 0 320 80" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="glowGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,60 Q40,20 80,45 T160,15 T240,40 T320,10 L320,80 L0,80 Z" fill="url(#glowGrad)"></path>
+                <path d="M0,60 Q40,20 80,45 T160,15 T240,40 T320,10" fill="none" stroke="#FFFFFF" stroke-width="3"></path>
+                <circle cx="320" cy="10" r="4" fill="#FFFFFF" stroke="#090C10" stroke-width="2"></circle>
+              </svg>
+            </div>
+            <div class="chart-timeline">
+              <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>TODAY</span>
+            </div>
+          </div>
+
+          <!-- Dual Stat Tiles (From Reference Image) -->
+          <div class="metrics-grid">
+            <div class="metric-tile">
+              <span class="tile-label">Discovered</span>
+              <div class="tile-val-row">
+                <span class="tile-val" id="metricTileDiscovered">45</span>
+                <span class="tile-sub text-lime">Active</span>
+              </div>
+              <div class="mini-bar-graph">
+                <div class="mini-bar" style="height: 40%"></div>
+                <div class="mini-bar" style="height: 65%"></div>
+                <div class="mini-bar" style="height: 50%"></div>
+                <div class="mini-bar active" style="height: 95%"></div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <span class="tile-label">Emails Delivered</span>
+              <div class="tile-val-row">
+                <span class="tile-val" id="metricTileSent">27</span>
+                <span class="tile-sub text-blue">Verified</span>
+              </div>
+              <div class="mini-bar-graph">
+                <div class="mini-bar" style="height: 30%"></div>
+                <div class="mini-bar" style="height: 60%"></div>
+                <div class="mini-bar" style="height: 75%"></div>
+                <div class="mini-bar active-blue" style="height: 90%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filterable Leads Explorer -->
+          <div class="feed-section">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="leadsSearchInput" placeholder="Search agencies, city, or specialty...">
+            </div>
+            <div class="leads-list" id="analyticsLeadsList"></div>
+          </div>
+        </section>
+
+        <!-- ================= SCREEN 3: SETTINGS ================= -->
+        <section class="screen" id="screenSettings">
+          <header class="app-header">
+            <h1 class="greeting-title">Radar Settings</h1>
+          </header>
+
+          <div class="profile-card">
+            <div class="profile-avatar">
+              <img src="logo.jpg" alt="G&D" class="profile-logo-img">
+            </div>
+            <div class="profile-info">
+              <h2 class="profile-name">Moksh &amp; Varul</h2>
+              <span class="profile-tag">Founders, Galileo &amp; Duke</span>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <span class="group-title">OUTREACH CONFIGURATION</span>
+            
+            <div class="settings-row interactive-row" id="settingTargetCityRow">
+              <div class="row-info">
+                <span class="row-title">Target City / Region</span>
+                <span class="row-desc" id="settingTargetCityDesc">Australia</span>
+              </div>
+              <button class="pill-badge pill-silver" id="btnSettingChangeCity" style="cursor: pointer;">CHANGE 📍</button>
+            <div class="settings-row interactive-row" id="settingBackendUrlRow">
+              <div class="row-info">
+                <span class="row-title">Backend Server URL</span>
+                <span class="row-desc" id="settingBackendUrlDesc">Local Engine (Default)</span>
+              </div>
+              <button class="pill-badge pill-silver" id="btnConfigBackendUrl" style="cursor: pointer;">SERVER 🌐</button>
+            </div>
+
+            <div class="settings-row">
+              <div class="row-info">
+                <span class="row-title">Sender Mailbox</span>
+                <span class="row-desc" id="settingSenderEmail">studio@galileoandduke.com</span>
+              </div>
+              <span class="pill-badge pill-green">SECURE 465</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="row-info">
+                <span class="row-title">Gemini AI Model</span>
+                <span class="row-desc" id="settingGeminiModel">gemini-2.0-flash</span>
+              </div>
+              <span class="pill-badge pill-silver">ACTIVE</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="row-info">
+                <span class="row-title">Daily Send Limit</span>
+                <span class="row-desc">Safety cap against spam filters</span>
+              </div>
+              <span class="pill-badge" id="settingDailyLimit">30 / day</span>
+            </div>
+
+            <div class="settings-row">
+              <div class="row-info">
+                <span class="row-title">Deliverability Delay</span>
+                <span class="row-desc">Randomized anti-bot pacing</span>
+              </div>
+              <span class="pill-badge">35s – 65s</span>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <span class="group-title">ACTIONS &amp; EXPORTS</span>
+            <a href="/GalileoDukeRadar.apk" download class="settings-action-btn" id="btnDownloadApk">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+              <span>Download Native Android App (.APK)</span>
+            </a>
+
+            <button class="settings-action-btn" id="btnExportFullPdf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span>Regenerate &amp; Download Latest PDF</span>
+            </button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ================= BOTTOM NAVIGATION FLOATING DOCK ================= -->
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-screen="screenHome" id="navHome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Home</span>
+        </button>
+
+        <button class="nav-btn" data-screen="screenAnalytics" id="navAnalytics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          <span>Leads</span>
+        </button>
+
+        <!-- Main Rounded G&D Logo Center Button -->
+        <button class="nav-main-action" id="btnOpenLaunchDrawer" title="Start Campaign">
+          <img src="logo.jpg" alt="G&D" class="nav-main-logo">
+        </button>
+
+        <button class="nav-btn" id="navPdfExport">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          <span>PDF</span>
+        </button>
+
+        <button class="nav-btn" data-screen="screenSettings" id="navSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- ================= LAUNCH CAMPAIGN ACTION DRAWER (Top-Right Keypad Screen in Reference) ================= -->
+      <div class="modal-backdrop" id="launchModal">
+        <div class="action-sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <h2 class="sheet-title">Launch Campaign</h2>
+            <button class="sheet-close" id="btnCloseLaunchModal">&times;</button>
+          </div>
+
+          <!-- Custom Target City / Region Input Box (Top of Selection) -->
+          <div class="target-city-input-box">
+            <div class="input-header-row">
+              <span class="input-label">TARGET CITY OR REGION</span>
+              <span class="input-subtext" id="targetRegionHint">Australia</span>
+            </div>
+            <div class="city-input-wrapper">
+              <svg class="city-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <input type="text" id="inputCustomCity" value="Australia" placeholder="Type ANY city (e.g. Brisbane, Austin, London...)" autocomplete="off">
+              <button type="button" class="btn-clear-city" id="btnClearCity" title="Reset input">&times;</button>
+            </div>
+          </div>
+
+          <!-- Region Quick Selectors & City Pills -->
+          <div class="pills-container">
+            <span class="pills-sublabel">QUICK SELECT HUBS</span>
+            <div class="region-pills-row">
+              <button class="region-pill active" data-region="Australia">Australia</button>
+              <button class="region-pill" data-region="Sydney">Sydney</button>
+              <button class="region-pill" data-region="Melbourne">Melbourne</button>
+              <button class="region-pill" data-region="Brisbane">Brisbane</button>
+              <button class="region-pill" data-region="Perth">Perth</button>
+              <button class="region-pill" data-region="Adelaide">Adelaide</button>
+              <button class="region-pill" data-region="United States">United States</button>
+              <button class="region-pill" data-region="New York">New York</button>
+              <button class="region-pill" data-region="Los Angeles">Los Angeles</button>
+              <button class="region-pill" data-region="London">London</button>
+            </div>
+          </div>
+
+          <!-- Target Selector Display -->
+          <div class="target-display-card">
+            <span class="target-label">EMAIL TARGET GOAL</span>
+            <div class="target-amount-box">
+              <span class="target-number" id="targetCounterDisplay">10</span>
+              <span class="target-unit">Verified Leads</span>
+            </div>
+            
+            <!-- Quick Chips -->
+            <div class="quick-chips-row">
+              <button class="chip-btn" data-val="5">5</button>
+              <button class="chip-btn active" data-val="10">10</button>
+              <button class="chip-btn" data-val="20">20</button>
+              <button class="chip-btn" data-val="30">30</button>
+              <button class="chip-btn" data-val="50">50</button>
+            </div>
+          </div>
+
+          <!-- Mode Toggle Switch (Dry Run vs Live Send) -->
+          <div class="mode-switch-container">
+            <button class="mode-toggle-btn active" id="btnModeDryRun">
+              <span>Dry Run / Preview</span>
+            </button>
+            <button class="mode-toggle-btn" id="btnModeLiveSend">
+              <span>Live Outreach Send</span>
+            </button>
+          </div>
+
+          <!-- Subject Line Preview -->
+          <div class="subject-input-box">
+            <span class="input-label">Subject Template</span>
+            <input type="text" id="inputSubjectTemplate" value="Enquiry for {agency_name}">
+          </div>
+
+          <!-- Big Neon Launch Button -->
+          <button class="btn-primary-neon" id="btnStartCampaignNow">
+            <span>START OUTREACH CAMPAIGN</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= LIVE RUNNING OVERLAY / PROGRESS SHEET ================= -->
+      <div class="modal-backdrop" id="progressModal">
+        <div class="action-sheet progress-sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <div class="running-indicator">
+              <span class="pulse-radar"></span>
+              <h2 class="sheet-title" id="progressTitle">Scraping &amp; Contacting...</h2>
+            </div>
+            <button class="btn-stop-campaign" id="btnStopCampaign">Stop</button>
+          </div>
+
+          <!-- Progress Ring & Numbers -->
+          <div class="progress-hero">
+            <div class="progress-numbers">
+              <span class="progress-current" id="progressCount">0</span>
+              <span class="progress-total" id="progressTotal">/ 10</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+            </div>
+            <span class="progress-status-text" id="progressStatusText">Initialising search engine matrix...</span>
+          </div>
+
+          <!-- Current Inspected Agency Card -->
+          <div class="live-lead-box" id="liveLeadBox">
+            <div class="live-lead-header">
+              <span class="live-lead-badge">CURRENT INSPECTION</span>
+              <span class="live-lead-city" id="liveLeadCity">Sydney, NSW</span>
+            </div>
+            <h3 class="live-lead-name" id="liveLeadName">Scanning search engines...</h3>
+            <span class="live-lead-site" id="liveLeadWebsite">-</span>
+          </div>
+
+          <!-- Live Activity Log -->
+          <div class="live-log-container" id="liveLogConsole">
+            <div class="log-entry log-info">[System] Connected to Galileo &amp; Duke Engine</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= LEAD DETAIL DRAWER (With Copy-Paste DMs & Links) ================= -->
+      <div class="modal-backdrop" id="leadDetailModal">
+        <div class="action-sheet lead-sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <h2 class="sheet-title" id="drawerAgencyName">Agency Name</h2>
+            <button class="sheet-close" id="btnCloseLeadDrawer">&times;</button>
+          </div>
+
+          <div class="lead-meta-row">
+            <a href="#" target="_blank" class="lead-site-btn" id="drawerWebsiteLink">
+              <span id="drawerWebsiteText">website.com</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+            <span class="lead-city-pill" id="drawerCity">Sydney, NSW</span>
+            <span class="lead-status-pill" id="drawerStatus">SENT</span>
+          </div>
+
+          <!-- Email Section -->
+          <div class="channel-card email-channel">
+            <div class="channel-header">
+              <span class="channel-badge text-blue">✉️ EMAIL OUTREACH</span>
+              <a href="#" id="drawerMailtoLink" class="channel-action">Open Email</a>
+            </div>
+            <div class="channel-field">
+              <span class="field-label">Primary Business Email</span>
+              <span class="field-value" id="drawerEmail">contact@agency.com</span>
+            </div>
+            <div class="channel-field">
+              <span class="field-label">Subject Sent</span>
+              <span class="field-value italic" id="drawerSubject">Enquiry for Agency</span>
+            </div>
+          </div>
+
+          <!-- LinkedIn Section -->
+          <div class="channel-card li-channel">
+            <div class="channel-header">
+              <span class="channel-badge text-li">💼 LINKEDIN PLAYBOOK</span>
+              <div class="channel-links-row">
+                <a href="#" target="_blank" id="drawerCompanyLiLink" class="channel-btn btn-li">Company Page</a>
+                <a href="#" target="_blank" id="drawerFounderLiLink" class="channel-btn btn-search">Find Founder ↗</a>
+              </div>
+            </div>
+            <div class="copy-box">
+              <div class="copy-header">
+                <span class="copy-label">Ready-to-Copy Connection Note (&lt;300 chars):</span>
+                <button class="btn-copy-chip" id="btnCopyLiNote">Copy Note</button>
+              </div>
+              <p class="copy-content" id="drawerLiNote">Hi! Loved your marketing work in Sydney...</p>
+            </div>
+          </div>
+
+          <!-- Instagram Section -->
+          <div class="channel-card ig-channel">
+            <div class="channel-header">
+              <span class="channel-badge text-ig">📸 INSTAGRAM DIRECT OUTREACH</span>
+              <a href="#" target="_blank" id="drawerIgLink" class="channel-btn btn-ig">Open Instagram Profile</a>
+            </div>
+            <div class="channel-field">
+              <span class="field-label">Handle</span>
+              <span class="field-value" id="drawerIgHandle">@agencyhandle</span>
+            </div>
+            <div class="copy-box ig-copy-box">
+              <div class="copy-header">
+                <span class="copy-label">Ready-to-Copy Instagram DM:</span>
+                <button class="btn-copy-chip" id="btnCopyIgDm">Copy DM</button>
+              </div>
+              <p class="copy-content" id="drawerIgDm">Hey team! Loved your campaigns in Sydney...</p>
+            </div>
+          </div>
+
+          <!-- Close / Done Button -->
+          <button class="btn-secondary-full" id="btnDoneLeadDrawer">Done</button>
+        </div>
+      </div>
+
+      <!-- Toast Alert Notification -->
+      <div class="toast-alert" id="toastAlert">
+        <span class="toast-icon">✓</span>
+        <span class="toast-msg" id="toastMessage">Copied to clipboard!</span>
+      </div>
+
+    </div> <!-- /phone-frame -->
+
+  </div> <!-- /app-viewport -->
+
+  <script src="app.js"></script>
+</body>
+</html>

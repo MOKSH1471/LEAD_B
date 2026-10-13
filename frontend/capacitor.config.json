@@ -1,0 +1,13 @@
+{
+  "appId": "com.galileoandduke.radar",
+  "appName": "Galileo & Duke Radar",
+  "webDir": "web/static",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

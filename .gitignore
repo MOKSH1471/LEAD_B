@@ -1,13 +1,53 @@
-node_modules/
+# Environment & Secrets
 .env
-results.csv
-call_list.csv
-contacted.json
-replies.json
-notified_replies.json
-subscribers.json
-test_search.js
-config/inboxes.json
-data/
-*.db
-autopilot_state.json
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node & Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.backup
+
+# Android & Gradle
+.gradle/
+build/
+*/build/
+*/*/build/
+*/*/*/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+Thumbs.db
+*.apk.idsig
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Allow root and frontend APK release binaries
+!GalileoDukeRadar.apk
+!frontend/GalileoDukeRadar.apk
+
+# Runtime lead data & generated reports
+leads_discovered.csv
+leads_sent.csv
+leads_report_latest.pdf
+reports/*.pdf
+!reports/.gitkeep

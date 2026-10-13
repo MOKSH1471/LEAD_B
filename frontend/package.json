@@ -1,0 +1,14 @@
+{
+  "name": "galileo-duke-radar",
+  "version": "1.0.0",
+  "description": "Galileo & Duke Agency Radar Android Mobile App",
+  "main": "web_server.py",
+  "scripts": {
+    "build:apk": "npx cap copy && cd android && gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  }
+}
