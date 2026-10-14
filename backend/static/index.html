@@ -237,12 +237,28 @@
               <button class="pill-badge pill-silver" id="btnConfigBackendUrl" style="cursor: pointer;">SERVER 🌐</button>
             </div>
 
+            <div class="settings-row interactive-row" id="settingResendKeyRow">
+              <div class="row-info">
+                <span class="row-title">Resend HTTP API Key (Cloud Safe)</span>
+                <span class="row-desc" id="settingResendKeyDesc">Not Configured (Using SMTP)</span>
+              </div>
+              <button class="pill-badge pill-silver" id="btnConfigResendKey" style="cursor: pointer;">KEY 🔑</button>
+            </div>
+
+            <div class="settings-row interactive-row" id="settingTestEmailRow">
+              <div class="row-info">
+                <span class="row-title">Delivery Engine</span>
+                <span class="row-desc" id="settingDeliveryMode">Checking status...</span>
+              </div>
+              <button class="pill-badge pill-silver" id="btnTestEmailConn" style="cursor: pointer;">TEST ⚡</button>
+            </div>
+
             <div class="settings-row">
               <div class="row-info">
                 <span class="row-title">Sender Mailbox</span>
                 <span class="row-desc" id="settingSenderEmail">studio@galileoandduke.com</span>
               </div>
-              <span class="pill-badge pill-green">SECURE 465</span>
+              <span class="pill-badge pill-silver" id="badgeDeliveryPort">PORT 443 / 465</span>
             </div>
 
             <div class="settings-row">

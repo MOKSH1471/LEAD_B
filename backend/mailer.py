@@ -2,6 +2,7 @@ import smtplib
 import imaplib
 import ssl
 import time
+import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
@@ -17,13 +18,35 @@ class TitanMailer:
         self.sender_name = config.SENDER_NAME
         self.sender_email = config.SENDER_EMAIL
         self.reply_to = config.REPLY_TO
+        self.resend_api_key = getattr(config, "RESEND_API_KEY", "").strip()
+        self.resend_from_email = getattr(config, "RESEND_FROM_EMAIL", "").strip() or self.sender_email
         self.imap_host = "imap.secureserver.net"
         self.imap_port = 993
 
+    @property
+    def is_resend_active(self):
+        return bool(self.resend_api_key)
+
     def test_connection(self):
-        """Verifies email credentials and connection."""
+        """Verifies email credentials and connection (Resend API or SMTP)."""
+        if self.is_resend_active:
+            try:
+                headers = {
+                    "Authorization": f"Bearer {self.resend_api_key}",
+                    "Content-Type": "application/json"
+                }
+                resp = requests.get("https://api.resend.com/api_keys", headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    return True, "Successfully connected to Resend HTTP API!"
+                elif resp.status_code == 401:
+                    return False, "Resend API key is invalid or unauthorized."
+                else:
+                    return False, f"Resend API check returned HTTP {resp.status_code}: {resp.text}"
+            except Exception as e:
+                return False, f"Resend API connection failed: {str(e)}"
+
         if not self.password:
-            return False, "SMTP_PASSWORD is not set. Please update your .env file."
+            return False, "Neither RESEND_API_KEY nor SMTP_PASSWORD is set in configuration."
 
         try:
             if self.port == 465:
@@ -35,7 +58,7 @@ class TitanMailer:
                     server.ehlo()
                     server.starttls()
                     server.login(self.user, self.password)
-            return True, "Successfully connected and authenticated!"
+            return True, "Successfully connected and authenticated via SMTP!"
         except Exception as e:
             return False, f"Authentication failed: {str(e)}"
 
@@ -51,15 +74,53 @@ class TitanMailer:
 
     def send_email(self, to_email, subject, plain_text, html_text):
         """
-        Sends an outreach email via SMTP using standard RFC CRLF policy 
-        and syncs to webmail Sent folder.
+        Sends an outreach email via Resend HTTP API (recommended on cloud/Render)
+        or falls back to SMTP.
         """
-        if not self.password:
-            raise ValueError("SMTP_PASSWORD is missing in .env")
-
         user_prefix = to_email.split("@")[0].lower().strip() if "@" in to_email else ""
         if getattr(config, "IGNORE_INFO_EMAILS", True) and (user_prefix in ["info", "information"] or user_prefix.startswith("info.") or user_prefix.startswith("info_") or user_prefix.startswith("info-")):
             raise ValueError(f"Aborted send: '{to_email}' is a generic info email and IGNORE_INFO_EMAILS is enabled.")
+
+        # =========================================================================
+        # METHOD 1: Resend HTTP REST API (Over HTTPS Port 443 - Never blocked on Render)
+        # =========================================================================
+        if self.is_resend_active:
+            from_address = f"{self.sender_name} <{self.resend_from_email}>" if self.sender_name else self.resend_from_email
+            headers = {
+                "Authorization": f"Bearer {self.resend_api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": from_address,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_text,
+                "text": plain_text,
+                "reply_to": self.reply_to or self.resend_from_email
+            }
+            
+            try:
+                resp = requests.post("https://api.resend.com/emails", json=payload, headers=headers, timeout=20)
+                if resp.status_code in [200, 201]:
+                    email_id = resp.json().get("id", "")
+                    print(f"[+] [Resend HTTP API] Outreach successfully delivered to {to_email} (ID: {email_id})")
+                    return True
+                else:
+                    err_msg = resp.text
+                    try:
+                        err_json = resp.json()
+                        err_msg = err_json.get("message") or err_msg
+                    except Exception:
+                        pass
+                    raise RuntimeError(f"Resend HTTP API returned error ({resp.status_code}): {err_msg}")
+            except requests.exceptions.RequestException as req_err:
+                raise RuntimeError(f"Resend HTTP request failed: {str(req_err)}")
+
+        # =========================================================================
+        # METHOD 2: Direct SMTP Fallback (Standard socket connection)
+        # =========================================================================
+        if not self.password:
+            raise ValueError("Email delivery error: Neither RESEND_API_KEY nor SMTP_PASSWORD is configured.")
 
         msg = MIMEMultipart("alternative")
         msg["From"] = f"{self.sender_name} <{self.sender_email}>"
@@ -79,7 +140,6 @@ class TitanMailer:
         # Generate strictly RFC-compliant CRLF bytes using policy=SMTP
         raw_bytes = msg.as_bytes(policy=SMTP)
 
-        # 1. Send via SMTP with generous timeout (60s) and fallback retry
         sent = False
         last_err = None
         

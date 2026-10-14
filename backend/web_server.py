@@ -80,6 +80,8 @@ class SettingsRequest(BaseModel):
     daily_send_limit: Optional[int] = None
     min_delay_seconds: Optional[int] = None
     max_delay_seconds: Optional[int] = None
+    resend_api_key: Optional[str] = None
+    resend_from_email: Optional[str] = None
 
 def run_campaign_worker(req: CampaignRequest):
     """Background worker for live or preview campaigns."""
@@ -487,6 +489,7 @@ def trigger_generate_pdf():
 
 @app.get("/api/settings")
 def get_settings():
+    resend_set = bool(getattr(config, "RESEND_API_KEY", ""))
     return {
         "target_country": getattr(config, "TARGET_COUNTRY", "AU"),
         "email_subject_template": getattr(config, "EMAIL_SUBJECT_TEMPLATE", "Enquiry for {agency_name}"),
@@ -496,7 +499,20 @@ def get_settings():
         "min_delay_seconds": getattr(config, "MIN_DELAY_SECONDS", 35),
         "max_delay_seconds": getattr(config, "MAX_DELAY_SECONDS", 65),
         "smtp_host": getattr(config, "SMTP_HOST", ""),
-        "smtp_user": getattr(config, "SMTP_USER", "")
+        "smtp_user": getattr(config, "SMTP_USER", ""),
+        "resend_api_key_set": resend_set,
+        "resend_from_email": getattr(config, "RESEND_FROM_EMAIL", "") or getattr(config, "SENDER_EMAIL", ""),
+        "delivery_mode": "Resend HTTP API (Port 443 - Cloud Safe)" if resend_set else "Direct SMTP (Port 465)"
+    }
+
+@app.get("/api/test-email")
+def test_email_connection():
+    mailer = TitanMailer()
+    success, message = mailer.test_connection()
+    return {
+        "success": success,
+        "message": message,
+        "mode": "Resend HTTP API" if mailer.is_resend_active else "Direct SMTP"
     }
 
 @app.post("/api/settings")
@@ -515,6 +531,8 @@ def update_settings(settings: SettingsRequest):
     if settings.daily_send_limit: settings_dict["DAILY_SEND_LIMIT"] = str(settings.daily_send_limit)
     if settings.min_delay_seconds: settings_dict["MIN_DELAY_SECONDS"] = str(settings.min_delay_seconds)
     if settings.max_delay_seconds: settings_dict["MAX_DELAY_SECONDS"] = str(settings.max_delay_seconds)
+    if settings.resend_api_key is not None: settings_dict["RESEND_API_KEY"] = settings.resend_api_key
+    if settings.resend_from_email: settings_dict["RESEND_FROM_EMAIL"] = settings.resend_from_email
 
     updated_keys = set()
     new_lines = []
@@ -541,6 +559,8 @@ def update_settings(settings: SettingsRequest):
     if hasattr(config, "EMAIL_SUBJECT_TEMPLATE") and settings.email_subject_template: config.EMAIL_SUBJECT_TEMPLATE = settings.email_subject_template
     if hasattr(config, "GEMINI_API_KEY") and settings.gemini_api_key: config.GEMINI_API_KEY = settings.gemini_api_key
     if hasattr(config, "GEMINI_MODEL") and settings.gemini_model: config.GEMINI_MODEL = settings.gemini_model
+    if hasattr(config, "RESEND_API_KEY") and settings.resend_api_key is not None: config.RESEND_API_KEY = settings.resend_api_key
+    if hasattr(config, "RESEND_FROM_EMAIL") and settings.resend_from_email: config.RESEND_FROM_EMAIL = settings.resend_from_email
 
     return {"status": "saved"}
 

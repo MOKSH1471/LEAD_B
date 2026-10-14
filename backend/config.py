@@ -12,6 +12,10 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
 SMTP_USER = os.getenv("SMTP_USER", "studio@galileoandduke.com").strip()
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
 
+# Resend HTTP Email API (Recommended for Render & Cloud - uses HTTPS port 443)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "").strip()
+
 # Sender Information
 SENDER_NAME = os.getenv("SENDER_NAME", "Moksh | Galileo & Duke").strip()
 SENDER_EMAIL = SMTP_USER

@@ -897,6 +897,83 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSSE();
         loadStats();
         loadLeads();
+        loadSettings();
+      }
+    });
+  }
+
+  // Resend API and Email Settings
+  async function loadSettings() {
+    try {
+      const resp = await fetch(`${getApiBase()}/api/settings`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      
+      const resendDesc = document.getElementById('settingResendKeyDesc');
+      const deliveryMode = document.getElementById('settingDeliveryMode');
+      const senderEmail = document.getElementById('settingSenderEmail');
+      const badgePort = document.getElementById('badgeDeliveryPort');
+      
+      if (resendDesc) {
+        resendDesc.textContent = data.resend_api_key_set ? 'Active & Configured (HTTPS 443)' : 'Not Configured (Using SMTP)';
+      }
+      if (deliveryMode) {
+        deliveryMode.textContent = data.delivery_mode || 'Direct SMTP (Port 465)';
+      }
+      if (senderEmail && data.resend_from_email) {
+        senderEmail.textContent = data.resend_from_email;
+      }
+      if (badgePort) {
+        badgePort.textContent = data.resend_api_key_set ? 'CLOUD API 443' : 'SMTP 465';
+        badgePort.className = `pill-badge ${data.resend_api_key_set ? 'pill-green' : 'pill-silver'}`;
+      }
+    } catch (e) {
+      console.warn('Could not load settings:', e);
+    }
+  }
+
+  const btnConfigResendKey = document.getElementById('btnConfigResendKey');
+  if (btnConfigResendKey) {
+    btnConfigResendKey.addEventListener('click', async () => {
+      const entered = prompt('Enter your Resend API Key (starts with re_...):', '');
+      if (entered !== null) {
+        const clean = entered.trim();
+        showToast('Saving Resend API Key...');
+        try {
+          const resp = await fetch(`${getApiBase()}/api/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resend_api_key: clean })
+          });
+          if (resp.ok) {
+            showToast('Resend API Key updated successfully!');
+            loadSettings();
+          } else {
+            showToast('Failed to update Resend key', true);
+          }
+        } catch (err) {
+          showToast(`Error: ${err.message}`, true);
+        }
+      }
+    });
+  }
+
+  const btnTestEmailConn = document.getElementById('btnTestEmailConn');
+  if (btnTestEmailConn) {
+    btnTestEmailConn.addEventListener('click', async () => {
+      showToast('Testing email delivery connection...');
+      try {
+        const resp = await fetch(`${getApiBase()}/api/test-email`);
+        const data = await resp.json();
+        if (data.success) {
+          alert(`✅ Email Connection Verified!\nMode: ${data.mode}\nStatus: ${data.message}`);
+          showToast(`Verified via ${data.mode}`);
+        } else {
+          alert(`⚠️ Connection Notice:\nMode: ${data.mode}\nDetails: ${data.message}`);
+          showToast(`Check: ${data.message}`, true);
+        }
+      } catch (err) {
+        showToast(`Test failed: ${err.message}`, true);
       }
     });
   }
@@ -949,4 +1026,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSSE();
   loadStats();
   loadLeads();
+  loadSettings();
 });
