@@ -37,7 +37,9 @@ class TitanMailer:
                 }
                 resp = requests.get("https://api.resend.com/api_keys", headers=headers, timeout=10)
                 if resp.status_code == 200:
-                    return True, "Successfully connected to Resend HTTP API!"
+                    return True, "Successfully connected to Resend HTTP API (Full Access)!"
+                elif resp.status_code == 401 and "restricted_api_key" in resp.text:
+                    return True, "Successfully connected to Resend HTTP API (Sending Access Verified)!"
                 elif resp.status_code == 401:
                     return False, "Resend API key is invalid or unauthorized."
                 else:
